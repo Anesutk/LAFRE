@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import StudentShell from '../../components/StudentShell';
-import { apiFetch, getApiBase, getToken } from '../../lib/api';
+import StudentShell from '../components/StudentShell';
+import { apiFetch, getApiBase, getToken } from '../lib/api';
 
 function formatSize(bytes) { if (!bytes) return '—'; if (bytes < 1024) return `${bytes} B`; if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`; return `${(bytes / 1024 / 1024).toFixed(1)} MB`; }
 function formatDate(value) { try { return new Date(value).toLocaleDateString(); } catch { return '—'; } }

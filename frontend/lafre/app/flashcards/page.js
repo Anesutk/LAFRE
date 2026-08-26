@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import StudentShell from '../../components/StudentShell';
-import { apiFetch } from '../../lib/api';
+import StudentShell from '../components/StudentShell';
+import { apiFetch } from '../lib/api';
 
 export default function Flashcards() {
   const [decks,setDecks]=useState([]);

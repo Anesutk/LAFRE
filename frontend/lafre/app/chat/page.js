@@ -2,8 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { apiFetch, clearAuth, getApiBase, getProfile, getToken } from '../../lib/api';
-
+import { apiFetch, clearAuth, getApiBase, getProfile, getToken } from '../lib/api';
 
 function formatDate(value) { try { return new Date(value).toLocaleDateString([], { month: 'short', day: 'numeric' }); } catch { return ''; } }
 function profileInitial(profile) { return (profile?.full_name || profile?.email || 'L').slice(0, 1).toUpperCase(); }
