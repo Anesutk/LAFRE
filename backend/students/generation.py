@@ -42,9 +42,6 @@ DISCLAIMER_STUDENT = "Legal information, not legal advice."
 
 
 @dataclass
-
-
-@dataclass
 class SourceItem:
     id: str
     title: str
@@ -76,9 +73,6 @@ class SourceItem:
             "download_name": self.download_name or self.title,
             "source_uri_token": self.source_uri_token,
         }
-
-
-@dataclass
 
 
 def safe_title(name: str) -> str:
