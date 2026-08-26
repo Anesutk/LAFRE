@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import StudentShell from '../../components/StudentShell';
+import StudentShell from '../components/StudentShell';
 
 export default function StudentSettings() {
   const [profile, setProfile] = useState(null);

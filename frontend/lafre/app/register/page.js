@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { apiFetch, redirectTo } from '../../lib/api';
+import { apiFetch, redirectTo } from '../lib/api';
 
 function ErrorBox({ message, debug }) {
   if (!message) return null;
