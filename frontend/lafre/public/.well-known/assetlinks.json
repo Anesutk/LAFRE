@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.lafre.twa",
+        "sha256_cert_fingerprints": ["D6:4F:54:32:84:87:C1:20:1C:BD:32:81:25:F3:9C:46:9B:C2:4C:16:E5:F3:8D:BC:FE:17:8D:70:0F:DB:53:69"]
+      }
+    }]

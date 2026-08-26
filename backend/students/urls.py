@@ -1,0 +1,36 @@
+from django.urls import path
+from .views import (
+    AssignmentUploadView,
+    FlashcardDeckListView,
+    StudentAccessRequestView,
+    StudentAskStreamView,
+    StudentAskView,
+    StudentChatDetailView,
+    StudentChatListView,
+    StudentDocumentDetailView,
+    StudentDocumentListView,
+    StudentPromptConfigView,
+    download_kb_source_document,
+    download_student_document,
+    get_presigned_url,
+    view_kb_source_document,
+    view_student_document,
+)
+
+urlpatterns = [
+    path("ask/", StudentAskView.as_view(), name="student-ask"),
+    path("ask/stream/", StudentAskStreamView.as_view(), name="student-ask-stream"),
+    path("assignment-upload/", AssignmentUploadView.as_view(), name="student-assignment-upload"),
+    path("documents/", StudentDocumentListView.as_view(), name="student-documents"),
+    path("documents/<int:pk>/", StudentDocumentDetailView.as_view(), name="student-document-detail"),
+    path("documents/<int:pk>/view/", view_student_document, name="student-document-view"),
+    path("documents/<int:pk>/download/", download_student_document, name="student-document-download"),
+    path("kb-sources/<str:token>/view/", view_kb_source_document, name="student-kb-source-view"),
+    path("kb-sources/<str:token>/download/", download_kb_source_document, name="student-kb-source-download"),
+    path("chats/", StudentChatListView.as_view(), name="student-chats"),
+    path("chats/<str:pk>/", StudentChatDetailView.as_view(), name="student-chat-detail"),
+    path("flashcards/", FlashcardDeckListView.as_view(), name="student-flashcards"),
+    path("access-request/", StudentAccessRequestView.as_view(), name="student-access-request"),
+    path("prompts/", StudentPromptConfigView.as_view(), name="student-prompts"),
+    path("presigned-url/", get_presigned_url, name="student-presigned-url-disabled"),
+]

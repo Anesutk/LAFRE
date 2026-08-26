@@ -1,0 +1,1 @@
+export default function LimitReached(){return <main className="loader-screen"><div className="loader-mark"><span>L</span></div><h1>Limit reached</h1><p>Your daily limit has been reached. Contact admin if you need more access.</p><a className="primary" href="/">Back</a></main>}
