@@ -3,5 +3,6 @@ set -o errexit
 
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-python manage.py collectstatic --noinput
+mkdir -p staticfiles
+python manage.py collectstatic --noinput --clear --verbosity 2
 python manage.py migrate --noinput

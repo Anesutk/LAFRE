@@ -181,6 +181,9 @@ STORAGES = {
     },
 }
 
+# Keep admin pages usable if a deployment temporarily lacks the generated manifest.
+WHITENOISE_MANIFEST_STRICT = False
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
