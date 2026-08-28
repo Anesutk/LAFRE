@@ -64,10 +64,14 @@ likely to be gotten wrong, so read it twice:
   Example: you asked "Did you mean the Control of Goods Act instead of the Sales of Goods Act?"
   and the student replies "yes" -> you now explain the Control of Goods Act. You do not ask
   again "did you mean the Control of Goods Act or...".
-- If a topic name you were given genuinely does not match anything in search_sources, ask a
-  clarifying question ONCE, then commit to the best available interpretation of whatever the
-  student says next, even if their reply is still imprecise - do not loop asking variations of
-  the same question more than once per topic.
+- If a topic name you were given doesn't exactly match anything in search_sources, DON'T just
+  ask a clarifying question and stop - search for the closest plausible match instead (e.g.
+  "Sale of Goods Act" not existing in Zimbabwe -> search "Control of Goods Act", the real
+  equivalent), answer using that best guess, then call note_assumption to flag what you
+  assumed. Only fall back to ask_clarifying_question (see Step 4) when you genuinely cannot
+  make any reasonable guess at all - e.g. "explain that" with truly nothing in the chat to
+  resolve it against. See the note_assumption and ask_clarifying_question tool descriptions
+  below for exactly when to use each.
 - If this question has its own clear new topic, unrelated to recent chat, answer the new topic
   - do not drag the old topic in just because the chat has history.
 - CRITICAL: when a message is vague and refers back to something ("give me things worth 20
@@ -471,12 +475,30 @@ def generate_agentic_answer(
         return "added"
 
     @tool
+    def note_assumption(assumption: str) -> str:
+        """Use this INSTEAD of ask_clarifying_question whenever you can make a reasonable guess
+        at what the student meant and something relevant was found for it - answer using that
+        best guess (call the normal content tools as usual), then call this to flag the
+        assumption at the end, so the student can correct you in one reply instead of getting
+        blocked with no content. This should be your DEFAULT for ambiguity - only use
+        ask_clarifying_question when you genuinely cannot make any reasonable guess at all.
+        Args:
+            assumption: one short sentence, e.g. "I've assumed you meant the Control of Goods
+                Act, since Zimbabwe does not have a separate Sale of Goods Act - let me know if
+                you meant something else."
+        """
+        state["blocks"].append({"type": "text", "content": f"> {assumption.strip()}"})
+        return "added"
+
+    @tool
     def ask_clarifying_question(question: str, reason: str) -> str:
-        """Call this INSTEAD of answering when the question is genuinely ambiguous (after
-        applying Step 0's context check) or nothing relevant was found for a specific factual
-        question. Do not combine with other tools in the same turn. Do not call this twice in a
-        row for the same topic - if you already asked once and the student replied, resolve it
-        (see Step 0) rather than asking again.
+        """Call this INSTEAD of answering ONLY when the question is so ambiguous or so far off
+        from anything in search_sources that no reasonable best-guess answer is possible at
+        all. This should be rare - if you can make ANY reasonable guess with something relevant
+        found, answer using that guess and call note_assumption instead, don't block the
+        student with no content. Do not combine with other tools in the same turn. Do not call
+        this twice in a row for the same topic - if you already asked once and the student
+        replied, resolve it (see Step 0) rather than asking again.
         Args:
             question: the clarifying question to show the student.
             reason: one short internal note on why (not shown verbatim, for logging).
@@ -516,8 +538,8 @@ def generate_agentic_answer(
             tools=[
                 search_sources, write_heading, write_paragraph, write_label, write_bullets,
                 write_numbered, write_note, write_quote_block, write_table, write_flashcards,
-                write_citation_cards, mark_source_relevant, cite_page, ask_clarifying_question,
-                suggest_next,
+                write_citation_cards, mark_source_relevant, cite_page, note_assumption,
+                ask_clarifying_question, suggest_next,
             ],
             callback_handler=_on_agent_event if progress_callback else None,
         )

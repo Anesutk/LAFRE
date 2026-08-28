@@ -181,9 +181,6 @@ STORAGES = {
     },
 }
 
-# Keep admin pages usable if a deployment temporarily lacks the generated manifest.
-WHITENOISE_MANIFEST_STRICT = False
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
@@ -215,6 +212,11 @@ if RENDER_EXTERNAL_HOSTNAME:
     _default_origins.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
 
 CORS_ALLOW_ALL_ORIGINS = env_bool("CORS_ALLOW_ALL_ORIGINS", "1" if DEBUG else "0")
+
+# When True, new signups skip the "pending approval" wait entirely and are usable
+# immediately. Default False so this is opt-in - set AUTO_APPROVE_SIGNUPS=1 on Render
+# when you want frictionless signup for testing, unset/0 to require manual approval again.
+AUTO_APPROVE_SIGNUPS = env_bool("AUTO_APPROVE_SIGNUPS", "0")
 CORS_ALLOW_CREDENTIALS = True
 
 # django-cors-headers' default allow-list does NOT include our custom X-Session-ID header

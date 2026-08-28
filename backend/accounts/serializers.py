@@ -143,15 +143,21 @@ def create_lafre_user(*, email: str, password: str, first_name: str, last_name: 
         first_name=(first_name or "").strip(),
         last_name=(last_name or "").strip(),
     )
+    from django.conf import settings as django_settings
+    from django.utils import timezone as django_timezone
+
+    auto_approve = getattr(django_settings, "AUTO_APPROVE_SIGNUPS", False)
     profile_data = {
         "user": user,
         "role": role,
         "requested_role": role,
-        "status": UserProfile.Status.PENDING,
+        "status": UserProfile.Status.APPROVED if auto_approve else UserProfile.Status.PENDING,
         "phone": (phone or "").strip(),
         "auth_provider": UserProfile.AuthProvider.EMAIL,
-        "email_verified": False,
+        "email_verified": auto_approve,
     }
+    if auto_approve:
+        profile_data["approved_at"] = django_timezone.now()
     profile_data.update(ROLE_TO_FLAGS[role])
     profile_data.update(DEFAULT_LIMITS[role])
     profile_data.update(profile_extra or {})

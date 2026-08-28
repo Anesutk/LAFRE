@@ -87,7 +87,7 @@ def suggested_redirect(profile: UserProfile | None, requested_module: str | None
     if not profile:
         return "/login"
     if not profile.is_active_for_platform():
-        return f"/{requested_module}/pending" if requested_module in {"student", "citizen", "lawyer", "admin"} else "/pending-approval"
+        return "/pending" if requested_module in {"student", "citizen", "lawyer", "admin"} else "/pending-approval"
     if requested_module == "student":
         return "/chat" if profile.can_use_student else "/access-denied"
     if requested_module == "citizen":
@@ -160,7 +160,11 @@ class ModuleRegisterCompleteView(APIView):
             "success": True,
             "message": f"Your LAFRE {label} account request was submitted for administrator approval.",
             "profile": UserProfileSerializer(profile).data,
-            "redirect_to": f"/{profile.role}/pending" if profile.role in {"student", "citizen"} else "/pending-approval",
+            "redirect_to": (
+                "/chat" if profile.role == "student" and getattr(settings, "AUTO_APPROVE_SIGNUPS", False)
+                else "/pending" if profile.role in {"student", "citizen"}
+                else "/pending-approval"
+            ),
         }, status=status.HTTP_201_CREATED)
 
 
@@ -201,7 +205,11 @@ class ModuleRegisterView(APIView):
             "success": True,
             "message": f"Your LAFRE {label} account request was submitted for administrator approval.",
             "profile": UserProfileSerializer(profile).data,
-            "redirect_to": f"/{profile.role}/pending" if profile.role in {"student", "citizen"} else "/pending-approval",
+            "redirect_to": (
+                "/chat" if profile.role == "student" and getattr(settings, "AUTO_APPROVE_SIGNUPS", False)
+                else "/pending" if profile.role in {"student", "citizen"}
+                else "/pending-approval"
+            ),
         }, status=status.HTTP_201_CREATED)
 
 
