@@ -1297,3 +1297,78 @@ select:focus { border-color: var(--gold); outline: none; }
   .lafre-public-nav .lafre-brown-btn { display: none; }
 }
 
+/* ================================================================
+   Admin interface — superuser-only account management
+   ================================================================ */
+.admin-shell { max-width: 1080px; margin: 0 auto; padding: 24px 24px 80px; color: var(--ink); }
+.admin-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 0 22px; border-bottom: 1px solid var(--border); margin-bottom: 26px; }
+.admin-brand { display: flex; align-items: center; gap: 8px; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 1.3rem; }
+.admin-mark { width: 30px; height: 30px; border: 1.5px solid var(--gold); border-radius: 8px; display: grid; place-items: center; color: var(--gold); font-size: .95rem; }
+.admin-btn-solid, .admin-btn-ghost { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 9px; font-size: .83rem; font-weight: 600; cursor: pointer; text-decoration: none; border: 1px solid transparent; }
+.admin-btn-solid { background: var(--ink); color: #fff; }
+.admin-btn-solid:hover { background: var(--gold); }
+.admin-btn-solid:disabled { background: var(--border-2); color: var(--muted); cursor: default; }
+.admin-btn-ghost { border-color: var(--border); background: transparent; color: var(--ink); }
+.admin-btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+.admin-btn-sm { padding: 5px 11px; font-size: .76rem; }
+
+.admin-notice { background: var(--gold-light); border: 1px solid var(--gold); border-radius: 10px; padding: 10px 16px; font-size: .85rem; margin-bottom: 20px; cursor: pointer; }
+
+.admin-stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 30px; }
+.admin-stat { border: 1px solid var(--border); border-radius: 12px; padding: 16px 14px; text-align: center; }
+.admin-stat b { display: block; font-size: 1.6rem; font-family: 'Cormorant Garamond', serif; color: var(--ink); }
+.admin-stat span { font-size: .74rem; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+
+.admin-queue { margin-bottom: 30px; }
+.admin-queue h2, .admin-directory h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; margin: 0 0 12px; }
+.admin-queue-list { display: flex; flex-direction: column; gap: 8px; }
+.admin-queue-row { display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; }
+.admin-queue-row b { display: block; font-size: .88rem; }
+.admin-queue-row span { font-size: .78rem; color: var(--muted); }
+
+.admin-directory-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.admin-filters { display: flex; gap: 8px; }
+.admin-filters input, .admin-filters select { border: 1px solid var(--border); border-radius: 8px; padding: 7px 11px; font-size: .82rem; font-family: 'Inter', sans-serif; }
+.admin-filters input:focus, .admin-filters select:focus { outline: none; border-color: var(--gold); }
+
+.admin-table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+.admin-table th { text-align: left; padding: 9px 12px; border-bottom: 1.5px solid var(--gold); color: var(--muted); font-weight: 700; font-size: .75rem; text-transform: uppercase; letter-spacing: .03em; }
+.admin-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.admin-table tr:not(:first-child) { cursor: pointer; }
+.admin-table tr:hover td { background: var(--mist); }
+.admin-table tr.active td { background: var(--gold-light); }
+.admin-empty { text-align: center; color: var(--muted); padding: 24px !important; }
+.admin-loading { color: var(--muted); font-size: .85rem; }
+
+.admin-badge { font-size: .72rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; text-transform: capitalize; }
+.admin-badge-pending { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-border); }
+.admin-badge-approved { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+.admin-badge-suspended { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+
+.admin-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 340px; background: var(--surface); border-left: 1px solid var(--border); box-shadow: var(--sh-lg); padding: 22px; overflow-y: auto; z-index: 30; }
+.admin-drawer-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.admin-drawer-head button { border: none; background: none; font-size: 1.3rem; cursor: pointer; color: var(--muted); }
+.admin-drawer dl { display: grid; grid-template-columns: 110px 1fr; gap: 10px 8px; font-size: .82rem; margin-bottom: 20px; }
+.admin-drawer dt { color: var(--muted); }
+.admin-drawer dd { margin: 0; }
+
+.admin-modal-backdrop { position: fixed; inset: 0; background: rgba(17,18,20,.4); display: grid; place-items: center; z-index: 50; }
+.admin-modal { background: var(--surface); border-radius: 14px; padding: 24px 26px; width: 340px; box-shadow: var(--sh-lg); }
+.admin-modal h3 { font-family: 'Cormorant Garamond', serif; margin: 0 0 8px; font-size: 1.15rem; }
+.admin-modal p { font-size: .82rem; color: var(--muted); margin: 0 0 14px; }
+.admin-modal input { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: .88rem; margin-bottom: 8px; }
+.admin-modal input:focus { outline: none; border-color: var(--gold); }
+.admin-modal-error { color: var(--red) !important; }
+.admin-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+
+.admin-denied { min-height: 100vh; display: grid; place-items: center; }
+.admin-denied-card { text-align: center; max-width: 360px; }
+.admin-denied-icon { font-size: 1.8rem; color: var(--gold); display: block; margin-bottom: 12px; }
+.admin-denied-card h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; margin: 0 0 10px; }
+.admin-denied-card p { font-size: .87rem; color: var(--muted); margin: 0 0 20px; }
+
+@media (max-width: 720px) {
+  .admin-stats { grid-template-columns: repeat(2, 1fr); }
+  .admin-drawer { width: 100%; }
+}
+

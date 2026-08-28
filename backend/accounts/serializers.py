@@ -379,6 +379,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     remaining_documents = serializers.SerializerMethodField()
     remaining_uploads = serializers.SerializerMethodField()
     module_home = serializers.SerializerMethodField()
+    is_superuser = serializers.BooleanField(source="user.is_superuser", read_only=True)
+    is_staff = serializers.BooleanField(source="user.is_staff", read_only=True)
 
     class Meta:
         model = UserProfile
@@ -391,7 +393,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "daily_upload_limit", "monthly_upload_limit", "remaining_messages", "remaining_documents", "remaining_uploads",
             "messages_used_today", "documents_used_today", "uploads_used_today", "monthly_messages_used",
             "monthly_documents_used", "monthly_uploads_used", "theme_preference", "account_expiry", "admin_notes",
-            "module_home", "created_at", "updated_at",
+            "module_home", "created_at", "updated_at", "is_superuser", "is_staff",
         ]
         read_only_fields = fields
 
