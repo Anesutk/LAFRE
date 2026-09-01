@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from typing import Any, Dict, List, Optional
 
 from . import generation as legacy
@@ -192,9 +193,20 @@ If the student is asking you to REFERENCE or CITE something - phrases like "refe
 me" - this is a request for write_citation_cards, not a normal explanation and not a "legal
 research summary" describing the source. Make sure you know exactly which phrase/claim needs citing
 and which source it should come from (ask via ask_clarifying_question if that is not already
-obvious from the conversation), then call write_citation_cards using the real source(s) from
-search_sources. Do not answer a referencing request with write_paragraph/write_heading prose
-describing the source - that is not what "reference this" means.
+obvious from the conversation), then call write_citation_cards using the real source_id(s) from
+search_sources - the tool rejects any source_id that wasn't actually returned by
+search_sources, so you cannot cite something you didn't retrieve. Do not answer a referencing
+request with write_paragraph/write_heading prose describing the source - that is not what
+"reference this" means.
+
+CASE NAMES ARE NOT OPTIONAL TO GET RIGHT: a fabricated case name, quote, or paragraph
+reference is worse than saying nothing, because it is presented to a student as real legal
+authority. Only mention a case by name, quote it, or give it a pinpoint reference (para/page
+number) if that exact case name appears in a search_sources result for this turn. If you want
+to illustrate a point with a case example and nothing specific came back from search_sources,
+say so plainly ("a case example was not found for this in the available sources") instead of
+inventing a plausible-sounding case name - this applies in plain prose, not only in citation
+cards or cite_page.
 
 STEP 4B - NEVER REPEAT YOURSELF. Each block you add must contain information the student
 hasn't already been given in an earlier block of THIS SAME answer. A very common mistake is
@@ -383,14 +395,24 @@ def generate_agentic_answer(
         return "added"
 
     @tool
-    def write_quote_block(text: str, label: str = "") -> str:
+    def write_quote_block(text: str, source_id: str = "", label: str = "") -> str:
         """Quote exact wording the student needs to inspect precisely - a clause, a statute's
         actual text. Only use text that genuinely came from search_sources; never fabricate
-        wording and present it as a quote.
+        wording and present it as a quote. Always pass source_id when quoting something
+        specific - the quote is checked against that source's actual retrieved text, and
+        rejected if it doesn't appear there.
         Args:
             text: the exact wording being quoted.
+            source_id: the id from a prior search_sources result this quote comes from.
             label: optional short label, e.g. "Section 5(2)".
         """
+        if source_id:
+            src = state["sources"].get(source_id)
+            if not src:
+                return "rejected: that source_id was not in the search_sources results"
+            normalise = lambda s: re.sub(r"\s+", " ", s or "").strip().lower()
+            if normalise(text)[:60] not in normalise(getattr(src, "excerpt", "")):
+                return "rejected: this text does not appear in that source's retrieved excerpt - do not fabricate quotes"
         prefix = f"**{label.strip()}**  \n" if label and label.strip() else ""
         state["blocks"].append({"type": "text", "content": f"{prefix}> {text.strip()}"})
         return "added"
@@ -432,22 +454,32 @@ def generate_agentic_answer(
 
     @tool
     def write_citation_cards(items: List[Dict[str, str]]) -> str:
-        """Add copiable citation cards for referencing a source. Only cite a source that
-        actually came from search_sources - never invent a title/author/date.
+        """Add copiable citation cards for referencing a source. Each item MUST reference a
+        real source_id from a prior search_sources call - items without a matching source_id
+        are rejected automatically, so you cannot fabricate a citation even by mistake. Never
+        invent a case name, quote, or pinpoint reference that isn't backed by an actual
+        search_sources result.
         Args:
-            items: list of {"phrase": "the claim/quote being cited", "in_text": "the in-text
-                citation, e.g. (Author, Year)", "full_reference": "the full end-text/
-                bibliography entry"}.
+            items: list of {"source_id": "id from search_sources", "phrase": "the claim/quote
+                being cited", "in_text": "the in-text citation, e.g. (Author, Year)",
+                "full_reference": "the full end-text/bibliography entry"}.
         """
         kept = []
         for it in items or []:
+            source_id = str(it.get("source_id", "")).strip()
             phrase = str(it.get("phrase", "")).strip()
             in_text = str(it.get("in_text", "")).strip()
             full_ref = str(it.get("full_reference", "")).strip()
+            if source_id not in state["sources"]:
+                continue  # silently reject - not backed by a real retrieved source
             if in_text and full_ref:
                 kept.append({"phrase": phrase[:300], "in_text": in_text[:200], "full_reference": full_ref[:400]})
+                if source_id not in state["used_source_ids"]:
+                    state["used_source_ids"].append(source_id)
         state["citation_cards"].extend(kept)
-        return f"added {len(kept)} citation card(s)" if kept else "no valid citations (need in_text and full_reference)"
+        if not kept and items:
+            return "rejected: none of these source_id values matched an actual search_sources result"
+        return f"added {len(kept)} citation card(s)" if kept else "no valid citations (need source_id, in_text and full_reference)"
 
     @tool
     def mark_source_relevant(source_id: str, why_relevant: str) -> str:
@@ -587,7 +619,30 @@ def generate_agentic_answer(
     if not state["blocks"] and not state["flashcards"] and not state["citation_cards"]:
         return None  # model produced nothing usable
 
-    markdown = "\n\n".join(b["content"] for b in state["blocks"]).strip()
+    # Drop any heading block with nothing actually under it - a heading followed immediately
+    # by another heading of the SAME level (or sitting last with nothing after it) means the
+    # model called write_heading without following through, which reads as a missing/broken
+    # section. A heading followed by a deeper subheading is legitimate nesting and is kept.
+    def _heading_level(block):
+        content = block["content"]
+        if content.startswith("### "):
+            return 3
+        if content.startswith("## "):
+            return 2
+        return None
+
+    cleaned_blocks = []
+    for i, block in enumerate(state["blocks"]):
+        level = _heading_level(block)
+        if level is not None:
+            next_block = state["blocks"][i + 1] if i + 1 < len(state["blocks"]) else None
+            next_level = _heading_level(next_block) if next_block else None
+            is_empty = next_block is None or (next_level is not None and next_level <= level)
+            if is_empty:
+                continue  # empty heading - skip it
+        cleaned_blocks.append(block)
+
+    markdown = "\n\n".join(b["content"] for b in cleaned_blocks).strip()
     all_sources = list(state["sources"].values())
     markdown = legacy.clean_model_text(markdown) if markdown else markdown
     markdown = legacy.strip_leaked_tool_calls(markdown) if markdown else markdown

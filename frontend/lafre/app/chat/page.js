@@ -176,8 +176,28 @@ function StudentChatContent() {
   async function send(textArg, modeOverride) {
     const text = (textArg || prompt).trim(); if (!text || loading) return;
     const selectedMode = modeOverride || viewForMode();
+    // Every message pair below is tagged with this id and located by id on every update,
+    // never by array position (m.length-1 / slice(0,-2)) - position-based lookups broke if
+    // two sends ever overlapped (a fast double-click, or a click landing before `loading`
+    // had re-rendered to true), silently writing one request's answer into another
+    // request's message slot. That looked like "the wrong text for what I asked."
+    const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     setPrompt(''); setLastPrompt(text); setLoading(true);
-    setMessages((m) => [...m, { role: 'user', text, pending: true }, { role: 'assistant', loading: true, streaming: true, statusLabel: 'Getting started…', response: {} }]);
+    setMessages((m) => [...m, { role: 'user', text, pending: true, _rid: requestId }, { role: 'assistant', loading: true, streaming: true, statusLabel: 'Getting started…', response: {}, _rid: requestId }]);
+    const replacePair = (updater) => setMessages((m) => {
+      const idx = m.findIndex((msg) => msg._rid === requestId && msg.role === 'assistant');
+      if (idx === -1) return m; // this request's slot is gone (e.g. chat was switched) - drop the update safely
+      const copy = [...m];
+      copy[idx] = updater(copy[idx]);
+      return copy;
+    });
+    const replaceFinalPair = (userMsg, assistantMsg) => setMessages((m) => {
+      const idx = m.findIndex((msg) => msg._rid === requestId && msg.role === 'assistant');
+      if (idx === -1) return [...m, userMsg, assistantMsg]; // slot missing - append rather than lose the answer
+      const copy = [...m];
+      copy[idx - 1] = userMsg; copy[idx] = assistantMsg;
+      return copy;
+    });
     // Real token streaming (SSE) instead of a blocking request + fake progress steps.
     // Falls back to the plain /ask/ endpoint if the stream can't be read for any reason.
     try {
@@ -201,15 +221,15 @@ function StudentChatContent() {
           const line = raw.split('\n').find((l) => l.startsWith('data: ')); if (!line) continue;
           const evt = JSON.parse(line.slice(6));
           if (evt.type === 'meta') { /* meta.payload holds everything except markdown; used once 'done' arrives */ }
-          else if (evt.type === 'status') { setMessages((m) => { const copy = [...m]; const last = copy[copy.length - 1]; if (last?.loading) copy[copy.length - 1] = { ...last, statusLabel: evt.text }; return copy; }); }
-          else if (evt.type === 'token') { acc += evt.text; setMessages((m) => { const copy = [...m]; copy[copy.length - 1] = { role: 'assistant', loading: false, streaming: true, text: acc, response: {} }; return copy; }); }
+          else if (evt.type === 'status') { replacePair((msg) => msg.loading ? { ...msg, statusLabel: evt.text } : msg); }
+          else if (evt.type === 'token') { acc += evt.text; replacePair(() => ({ role: 'assistant', loading: false, streaming: true, text: acc, response: {}, _rid: requestId })); }
           else if (evt.type === 'done') { finalResponse = evt.payload || {}; finalChat = finalResponse.chat || null; }
           else if (evt.type === 'error') { throw new Error(evt.message || 'The study assistant could not produce an answer.'); }
         }
       }
       const response = finalResponse || {}; const chatIdFromStream = finalChat?.id || response.chat_id;
       setChatId(chatIdFromStream || chatId); if (finalChat?.title) setChatTitle(finalChat.title);
-      setMessages((m) => [...m.slice(0, -2), { role: 'user', text }, { role: 'assistant', text: response.markdown || acc || 'No response was returned.', response }]);
+      replaceFinalPair({ role: 'user', text }, { role: 'assistant', text: response.markdown || acc || 'No response was returned.', response, _rid: requestId });
       await loadChats();
     } catch (err) {
       // Fall back to the non-streaming endpoint once before giving up, in case the
@@ -218,11 +238,11 @@ function StudentChatContent() {
         const res = await apiFetch('/students/ask/', { method: 'POST', body: JSON.stringify({ prompt: text, chat_id: chatId, mode: selectedMode, answer_style: answerStyle }) });
         const response = res.response || {};
         setChatId(res.chat_id || chatId); if (res.chat?.title) setChatTitle(res.chat.title);
-        setMessages((m) => [...m.slice(0, -2), { role: 'user', text }, { role: 'assistant', text: response.markdown || 'No response was returned.', response }]);
+        replaceFinalPair({ role: 'user', text }, { role: 'assistant', text: response.markdown || 'No response was returned.', response, _rid: requestId });
         await loadChats();
       } catch (err2) {
         const loginRequired = err2.status === 401 && err2.payload?.mode === 'login_required';
-        setMessages((m) => [...m.slice(0, -2), { role: 'user', text }, { role: 'assistant', error: true, loginRequired, text: loginRequired ? 'You have used the three-message guest preview. Sign in to keep this chat and continue.' : (err2.message || 'We could not complete your request.'), debug: err2.debug || '' }]);
+        replaceFinalPair({ role: 'user', text }, { role: 'assistant', error: true, loginRequired, text: loginRequired ? 'You have used the three-message guest preview. Sign in to keep this chat and continue.' : (err2.message || 'We could not complete your request.'), debug: err2.debug || '', _rid: requestId });
       }
     } finally { setLoading(false); }
   }
