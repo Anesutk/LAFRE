@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { apiFetch, getProfile, redirectTo } from '../lib/api';
+import { apiFetch, getProfile, redirectTo, saveAuth } from '../lib/api';
 
 function StatCard({ label, value }) {
   return <div className="admin-stat"><b>{value ?? '—'}</b><span>{label}</span></div>;
@@ -64,11 +64,26 @@ export default function AdminPage() {
 
   useEffect(() => {
     setMounted(true);
-    const p = getProfile();
-    setProfile(p);
-    if (!p) { redirectTo('/login'); return; }
-    if (!p.is_superuser) { setLoading(false); return; }
-    Promise.all([loadDashboard(), loadUsers()]).finally(() => setLoading(false));
+    const cached = getProfile();
+    if (!cached) { redirectTo('/login'); return; }
+    setProfile(cached); // show something immediately while the fresh check runs
+    // Never trust the cached profile alone for an admin gate - it's whatever was true at
+    // last login, and can go stale the moment someone's is_superuser flag changes without
+    // them logging out and back in. Always re-check against the live account first.
+    apiFetch('/accounts/me/').then((res) => {
+      const fresh = res.profile;
+      setProfile(fresh);
+      saveAuth({ profile: fresh }); // keep the cached copy in sync so the rest of the app sees it too
+      if (fresh?.is_superuser) {
+        Promise.all([loadDashboard(), loadUsers()]).finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
+    }).catch(() => {
+      // Session may have expired - fall back to the cached value rather than hard-failing,
+      // the render below still gates correctly either way.
+      setLoading(false);
+    });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
