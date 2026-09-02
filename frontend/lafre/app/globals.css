@@ -1943,3 +1943,101 @@ html, body {
     min-height: 42px;
   }
 }
+
+
+/* FINAL CHAT REFINEMENTS
+   Visual-only polish: recent-chat gavel marks, roomier composer on all chats,
+   readable suggestion hover, no idle desktop overflow menu, and a soft fade
+   where the conversation approaches the composer. */
+.study-recent-list button {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .55rem;
+}
+.recent-chat-icon {
+  width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  color: var(--claude-orange);
+  opacity: .92;
+}
+.recent-chat-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.study-recent-list .recent-chat-title {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.study-recent-list button:hover .recent-chat-icon,
+.study-recent-list .active .recent-chat-icon {
+  color: #e3a357;
+}
+
+/* Keep starter prompt text stable on hover: only the border/accent treatment changes. */
+.study-suggestions button,
+.study-suggestions button:hover {
+  color: #655d56;
+  background: #fffdf9;
+}
+.study-suggestions button:hover {
+  border-color: #d99a55;
+  box-shadow: 0 0 0 1px rgba(217,154,85,.12);
+}
+
+/* The active-chat composer is deliberately roomy from the first render, matching
+   the new-chat composer rather than collapsing to a one-line field. */
+.study-bottom-composer {
+  min-height: 78px;
+  position: sticky;
+  isolation: isolate;
+  background: #fff;
+}
+.study-bottom-composer::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: -58px;
+  width: min(760px, calc(100vw - 2rem));
+  height: 58px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.78) 42%, #fff 100%);
+  z-index: -1;
+}
+.study-bottom-composer textarea {
+  min-height: 60px;
+  max-height: 160px;
+  padding-top: .95rem;
+  padding-bottom: .95rem;
+}
+.study-bottom-composer button[type=submit] {
+  margin-bottom: .15rem;
+}
+
+/* The desktop header no longer reserves a corner slot for an unused three-dot menu. */
+.study-more-wrap,
+.study-more {
+  display: none !important;
+}
+.study-more-spacer {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .study-bottom-composer {
+    min-height: 76px;
+  }
+  .study-bottom-composer::before {
+    width: calc(100vw - 1rem);
+  }
+}
