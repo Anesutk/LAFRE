@@ -1304,3 +1304,511 @@ select:focus { border-color: var(--gold); outline: none; }
   .lafre-public-nav .lafre-brown-btn { display: none; }
 }
 
+
+
+/* ================================================================
+   CLAUDE-INSPIRED VISUAL OVERRIDES — UI ONLY
+   Keeps existing LAFRE behaviour, routes and controls unchanged.
+   ================================================================ */
+:root {
+  --claude-bg: #ffffff;
+  --claude-sidebar: #f7f5f2;
+  --claude-sidebar-hover: #ece9e4;
+  --claude-sidebar-active: #e7e3dd;
+  --claude-ink: #24211e;
+  --claude-muted: #77716a;
+  --claude-line: #dedad5;
+  --claude-orange: #d96b3b;
+}
+
+html, body {
+  background: var(--claude-bg);
+  color: var(--claude-ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Main app chrome */
+.study-chat-page,
+.study-chat-main,
+.study-main-page,
+.study-standalone-page,
+.warm-module-main,
+.warm-module-content {
+  background: var(--claude-bg);
+}
+
+/* Light sidebar: same existing navigation/data, new visual treatment only. */
+.study-drawer,
+.chat-drawer,
+.module-drawer {
+  background: var(--claude-sidebar);
+  color: var(--claude-ink);
+  border-right: 1px solid var(--claude-line);
+  box-shadow: none;
+}
+
+.study-drawer-head {
+  height: 64px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--claude-line);
+}
+
+.study-drawer-head .study-brand,
+.study-drawer-head .lafre-brand,
+.study-drawer-head .lafre-wordmark,
+.study-drawer-head .study-brand strong,
+.study-drawer-head .lafre-wordmark strong {
+  color: var(--claude-ink);
+}
+
+.study-drawer-head .brand-mark,
+.study-drawer-head .study-brand > span:first-child {
+  color: var(--claude-orange);
+}
+
+.study-drawer-head button {
+  color: var(--claude-muted);
+}
+.study-drawer-head button:hover {
+  background: var(--claude-sidebar-hover);
+  color: var(--claude-ink);
+}
+
+.study-new-chat {
+  margin: 14px 14px 10px;
+  min-height: 40px;
+  padding: 0 14px;
+  background: transparent;
+  color: var(--claude-ink);
+  border: 1px solid var(--claude-line);
+  border-radius: 10px;
+  box-shadow: none;
+  font-weight: 600;
+}
+.study-new-chat:hover {
+  opacity: 1;
+  background: var(--claude-sidebar-hover);
+  border-color: #d3cec7;
+}
+
+.study-search {
+  padding: 0 14px 10px;
+}
+.study-search input,
+.warm-search input {
+  height: 36px;
+  background: #fff;
+  color: var(--claude-ink);
+  border: 1px solid var(--claude-line);
+  border-radius: 9px;
+  box-shadow: none;
+}
+.study-search input::placeholder,
+.warm-search input::placeholder {
+  color: #a19b94;
+}
+.study-search input:focus {
+  border-color: #c9c1b8;
+  box-shadow: 0 0 0 2px rgba(217,107,59,.08);
+}
+
+.study-recent-title {
+  padding: 8px 14px 6px;
+  color: #918a82;
+  font-size: .7rem;
+  letter-spacing: .09em;
+}
+
+.study-recent-list {
+  padding: 0 8px;
+  gap: 2px;
+}
+.study-recent-list a,
+.study-recent-list button {
+  padding: 9px 10px;
+  min-height: 38px;
+  color: #5f5952;
+  border-radius: 8px;
+  font-size: .82rem;
+}
+.study-recent-list a:hover,
+.study-recent-list button:hover {
+  background: var(--claude-sidebar-hover);
+  color: var(--claude-ink);
+}
+.study-recent-list .active {
+  background: var(--claude-sidebar-active);
+  color: var(--claude-ink);
+}
+.study-recent-list small {
+  color: #a19b94;
+}
+.study-recent-list p {
+  color: #99928a;
+}
+
+.study-drawer-nav {
+  border-top: 1px solid var(--claude-line);
+  padding: 9px 8px;
+  gap: 2px;
+}
+.study-drawer-nav a,
+.study-drawer-nav button {
+  padding: 9px 10px;
+  color: #666059;
+  border-radius: 8px;
+}
+.study-drawer-nav a:hover,
+.study-drawer-nav button:hover {
+  background: var(--claude-sidebar-hover);
+  color: var(--claude-ink);
+}
+
+.study-drawer-profile {
+  padding: 12px 14px;
+  border-top: 1px solid var(--claude-line);
+}
+.study-drawer-profile > span {
+  width: 32px;
+  height: 32px;
+  background: #e4dfd8;
+  color: var(--claude-ink);
+}
+.study-drawer-profile b { color: var(--claude-ink); }
+.study-drawer-profile small { color: #908980; }
+.study-drawer-profile button { color: #8f8880; }
+.study-drawer-profile button:hover { color: var(--claude-ink); }
+.study-guest-login { color: var(--claude-ink) !important; }
+
+/* Header: simple, white, thin divider like the reference UI. */
+.study-chat-header {
+  height: 62px;
+  padding: 0 24px;
+  background: #fff;
+  border-bottom: 1px solid var(--claude-line);
+  box-shadow: none;
+}
+.study-chat-header h1 {
+  color: var(--claude-ink);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: .95rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.study-chat-header button {
+  color: #777069;
+  border-radius: 8px;
+}
+.study-chat-header button:hover {
+  background: #f4f2ef;
+  color: var(--claude-ink);
+}
+
+/* Empty chat state: centered, roomy, and intentionally quiet. */
+.study-chat-scroll.empty {
+  background: #fff;
+  padding: 1.5rem 1rem 2rem;
+}
+.study-empty {
+  max-width: 640px;
+  transform: translateY(-2vh);
+}
+.study-empty-logo {
+  gap: .25rem;
+  margin-bottom: 1.15rem;
+}
+.study-empty-logo svg,
+.study-empty-logo span:first-child {
+  color: var(--claude-orange);
+  font-size: 2rem;
+}
+.study-empty-logo span:last-child {
+  color: var(--claude-muted);
+  letter-spacing: .22em;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: .65rem;
+  font-weight: 600;
+}
+.study-empty h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 500;
+  color: var(--claude-ink);
+  letter-spacing: -.035em;
+  line-height: 1;
+  margin-bottom: .85rem;
+}
+.study-empty p {
+  font-size: .96rem;
+  color: #7f7770;
+}
+
+/* Composer: floating rounded field, with existing textarea/send control intact. */
+.study-start-composer {
+  max-width: 640px;
+  margin: 1.45rem auto .85rem;
+  background: #fff;
+  border: 1px solid #d8d3cc;
+  border-radius: 18px;
+  box-shadow: 0 3px 16px rgba(42,35,29,.08), 0 1px 2px rgba(42,35,29,.04);
+}
+.study-start-composer:focus-within {
+  border-color: #c9c0b7;
+  box-shadow: 0 4px 18px rgba(42,35,29,.1), 0 0 0 3px rgba(217,107,59,.07);
+}
+.study-start-composer textarea {
+  padding: 16px 18px 8px;
+  min-height: 76px;
+  font-size: .95rem;
+  color: var(--claude-ink);
+}
+.study-start-composer > div {
+  padding: 5px 8px 8px;
+}
+.study-start-composer button[type=submit],
+.study-bottom-composer button[type=submit] {
+  width: 38px;
+  height: 38px;
+  background: var(--claude-ink);
+}
+.study-start-composer button[type=submit]:hover,
+.study-bottom-composer button[type=submit]:hover {
+  background: var(--claude-orange);
+}
+
+/* Keep existing suggestions functional, but visually quieter. */
+.study-suggestions {
+  justify-content: center;
+  gap: .45rem;
+  margin-top: .65rem;
+}
+.study-suggestions button {
+  background: #fff;
+  color: #6f6861;
+  border: 1px solid #e1ddd8;
+  border-radius: 999px;
+  box-shadow: none;
+}
+.study-suggestions button:hover {
+  background: #f7f4f1;
+  border-color: #d6cec6;
+  color: var(--claude-ink);
+}
+
+/* Conversation area: no chat bubbles; preserve existing message/actions/components. */
+.study-message-column {
+  max-width: 760px;
+  margin: 0 auto;
+}
+.study-user {
+  max-width: 72%;
+}
+.study-bottom-composer {
+  background: #fff;
+  border-top: 0;
+  border-color: #d8d3cc;
+  padding: 8px;
+  box-shadow: 0 3px 16px rgba(42,35,29,.08), 0 1px 2px rgba(42,35,29,.04);
+}
+.study-bottom-composer:focus-within {
+  border-color: #c9c0b7;
+  box-shadow: 0 4px 18px rgba(42,35,29,.1), 0 0 0 3px rgba(217,107,59,.07);
+}
+.study-bottom-composer textarea {
+  background: transparent;
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: none;
+}
+.study-bottom-composer textarea:focus {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* Source/details panels stay white and understated. */
+.study-source-panel {
+  background: #fff;
+  border-left: 1px solid var(--claude-line);
+  box-shadow: -8px 0 28px rgba(42,35,29,.08);
+}
+
+/* General content pages use the same airy palette and typography. */
+.study-main-page,
+.study-standalone-page {
+  max-width: 860px;
+}
+.warm-page-copy h1,
+.study-main-page h1,
+.study-standalone-page h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 500;
+  color: var(--claude-ink);
+}
+.warm-page-copy p,
+.warm-subtitle,
+.study-main-page p {
+  color: #77716a;
+}
+.warm-document-row,
+.warm-account-card,
+.warm-empty-card,
+.warm-usage-card,
+.study-result-card,
+.card {
+  background: #fff;
+  border-color: #e1ddd8;
+  box-shadow: 0 2px 8px rgba(42,35,29,.045);
+}
+.warm-document-row:hover,
+.study-result-card:hover {
+  border-color: #d3cbc2;
+}
+
+/* Buttons/accents become the same restrained terracotta accent. */
+.btn-primary,
+.primary,
+.lafre-brown-btn,
+.auth2-primary,
+.warm-upload-bar label,
+.warm-upload-bar button,
+.warm-usage-card button {
+  background: var(--claude-orange);
+  color: #fff;
+  box-shadow: none;
+}
+.btn-primary:hover,
+.primary:hover,
+.lafre-brown-btn:hover,
+.auth2-primary:hover,
+.warm-upload-bar label:hover,
+.warm-upload-bar button:hover,
+.warm-usage-card button:hover {
+  background: #c85f31;
+  opacity: 1;
+}
+
+/* Existing legal gold becomes subtle terracotta/orange without changing behaviour. */
+.brand-mark,
+.study-empty-logo svg,
+.study-empty-logo span:first-child,
+.loader-dots i,
+.study-next-actions button:hover {
+  color: var(--claude-orange);
+}
+
+/* Keep mobile behaviour unchanged, only restyle the drawer. */
+@media (max-width: 767px) {
+  .study-chat-header {
+    height: 54px;
+    padding: 0 14px;
+  }
+  .study-chat-scroll.empty {
+    padding: 1.25rem 1rem 1.5rem;
+  }
+  .study-empty {
+    transform: none;
+  }
+  .study-empty h1 {
+    font-size: clamp(2.35rem, 12vw, 3.25rem);
+  }
+  .study-start-composer {
+    border-radius: 16px;
+  }
+  .study-bottom-composer {
+    padding: .65rem .8rem 1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .study-drawer,
+  .chat-drawer,
+  .module-drawer {
+    width: 286px;
+  }
+  .study-chat-main {
+    margin-left: 286px;
+  }
+  .study-bottom-composer {
+    left: 286px;
+  }
+  .study-main-page,
+  .warm-module-main {
+    margin-left: 286px;
+  }
+}
+
+
+/* Shared standalone-page shell (navigation only; no new functionality). */
+.student-shell {
+  min-height: 100vh;
+  background: #fff;
+}
+.student-shell-sidebar {
+  display: none;
+}
+.student-shell-brand {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--claude-line);
+}
+.student-shell-brand .study-brand {
+  color: var(--claude-ink);
+}
+.student-shell-brand .study-brand > span:first-child {
+  color: var(--claude-orange);
+}
+.student-shell-new-chat {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  margin: 14px;
+  padding: 0 14px;
+  border: 1px solid var(--claude-line);
+  border-radius: 10px;
+  color: var(--claude-ink);
+  font-size: .84rem;
+  font-weight: 600;
+}
+.student-shell-new-chat:hover {
+  background: var(--claude-sidebar-hover);
+}
+.student-shell-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 8px;
+}
+.student-shell-nav a {
+  display: flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: #666059;
+  font-size: .82rem;
+}
+.student-shell-nav a:hover,
+.student-shell-nav a.active {
+  background: var(--claude-sidebar-hover);
+  color: var(--claude-ink);
+}
+
+@media (min-width: 768px) {
+  .student-shell-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    display: block;
+    width: 286px;
+    background: var(--claude-sidebar);
+    border-right: 1px solid var(--claude-line);
+    z-index: 30;
+  }
+  .student-shell > .study-main-page {
+    margin-left: 286px;
+    max-width: none;
+    padding: 34px clamp(24px, 4vw, 64px) 80px;
+  }
+}
