@@ -1597,6 +1597,7 @@ html, body {
 
 /* Conversation area: no chat bubbles; preserve existing message/actions/components. */
 .study-message-column {
+  width: 100%;
   max-width: 760px;
   margin: 0 auto;
 }
@@ -1997,6 +1998,8 @@ html, body {
 /* The active-chat composer is deliberately roomy from the first render, matching
    the new-chat composer rather than collapsing to a one-line field. */
 .study-bottom-composer {
+  width: min(760px, calc(100% - 2rem));
+  max-width: 760px;
   min-height: 78px;
   position: sticky;
   isolation: isolate;
@@ -2035,6 +2038,7 @@ html, body {
 
 @media (max-width: 767px) {
   .study-bottom-composer {
+    width: calc(100% - 2rem);
     min-height: 76px;
   }
   .study-bottom-composer::before {
