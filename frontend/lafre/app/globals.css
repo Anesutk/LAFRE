@@ -1812,3 +1812,134 @@ html, body {
     padding: 34px clamp(24px, 4vw, 64px) 80px;
   }
 }
+
+/* ================================================================
+   REFINEMENT PASS — CHAT SIDEBAR + NEW CHAT SUGGESTIONS
+   Visual-only: no routes, actions, APIs, or controls added.
+   ================================================================ */
+.sidebar-nav-icon {
+  width: 22px;
+  min-width: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  color: #6c6259;
+  font-size: 1.02rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.study-new-chat {
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255,255,255,.72);
+  box-shadow: none;
+  justify-content: flex-start;
+  gap: 0;
+}
+.study-new-chat .sidebar-nav-icon,
+.student-shell-new-chat .sidebar-nav-icon {
+  color: var(--claude-orange);
+  font-size: 1.18rem;
+  font-weight: 900;
+}
+.study-new-chat:hover {
+  background: rgba(255,255,255,.92);
+}
+
+.study-drawer-nav a,
+.study-drawer-nav button,
+.student-shell-nav a {
+  font-weight: 700;
+}
+.study-drawer-nav .sidebar-nav-icon,
+.student-shell-nav .sidebar-nav-icon {
+  color: #6b625a;
+  font-size: 1.08rem;
+  font-weight: 900;
+}
+.study-drawer-nav a:hover .sidebar-nav-icon,
+.study-drawer-nav button:hover .sidebar-nav-icon,
+.student-shell-nav a:hover .sidebar-nav-icon,
+.student-shell-nav a.active .sidebar-nav-icon {
+  color: var(--claude-orange);
+}
+
+/* The starter prompts now use the same width as the main chatbot composer. */
+.study-suggestions {
+  width: min(640px, 100%);
+  max-width: 640px;
+  margin: .7rem auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: .5rem;
+}
+.study-suggestions button {
+  width: 100%;
+  min-height: 44px;
+  padding: .7rem 1rem;
+  text-align: left;
+  border-radius: 12px;
+  border: 1px solid #e0d8cf;
+  background: #fffdf9;
+  color: #655d56;
+  font-size: .86rem;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(42,35,29,.035);
+}
+.study-suggestions button:hover {
+  background: #fff8ef;
+  border-color: rgba(217,107,59,.5);
+  box-shadow: 0 2px 9px rgba(217,107,59,.08);
+  color: var(--claude-ink);
+}
+
+/* Warm gold-orange touches, kept intentionally subtle. */
+.study-empty-logo,
+.study-empty-logo span:first-child,
+.study-empty-logo svg {
+  color: var(--claude-orange);
+}
+.study-empty h1::selection,
+.study-chat-header h1::selection,
+.student-shell-brand .study-brand strong::selection {
+  background: rgba(214,151,67,.28);
+}
+.study-chat-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 88px;
+  height: 2px;
+  background: linear-gradient(90deg, #d96b3b 0%, #e2a253 100%);
+  opacity: .78;
+}
+.study-chat-header {
+  position: relative;
+}
+
+.student-shell-new-chat {
+  border: 0;
+  background: rgba(255,255,255,.72);
+  font-weight: 700;
+}
+.student-shell-new-chat:hover {
+  background: rgba(255,255,255,.92);
+}
+.student-shell-nav a {
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+@media (max-width: 767px) {
+  .study-suggestions,
+  .study-start-composer {
+    max-width: 640px;
+  }
+  .study-suggestions button {
+    min-height: 42px;
+  }
+}

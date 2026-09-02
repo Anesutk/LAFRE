@@ -20,14 +20,14 @@ export default function StudentShell({ children, title = 'LAFRE', active = '' })
           </a>
         </div>
 
-        <a className="student-shell-new-chat" href="/chat">▣ New chat</a>
+        <a className="student-shell-new-chat" href="/chat"><span className="sidebar-nav-icon" aria-hidden="true">＋</span><span>New chat</span></a>
 
         <nav className="student-shell-nav" aria-label="Student navigation">
-          <a className={active === 'chat' ? 'active' : ''} href="/chat">Chat</a>
-          <a className={active === 'library' ? 'active' : ''} href="/library">▭ Library</a>
-          <a className={active === 'flashcards' ? 'active' : ''} href="/flashcards">◆ Flashcards</a>
-          <a className={active === 'usage' ? 'active' : ''} href="/usage">◔ Usage & messages</a>
-          <a className={active === 'settings' ? 'active' : ''} href="/settings">⚙ Settings</a>
+          <a className={active === 'chat' ? 'active' : ''} href="/chat"><span className="sidebar-nav-icon" aria-hidden="true">⌂</span><span>Chat</span></a>
+          <a className={active === 'library' ? 'active' : ''} href="/library"><span className="sidebar-nav-icon" aria-hidden="true">▤</span><span>Library</span></a>
+          <a className={active === 'flashcards' ? 'active' : ''} href="/flashcards"><span className="sidebar-nav-icon" aria-hidden="true">◆</span><span>Flashcards</span></a>
+          <a className={active === 'usage' ? 'active' : ''} href="/usage"><span className="sidebar-nav-icon" aria-hidden="true">◔</span><span>Usage & messages</span></a>
+          <a className={active === 'settings' ? 'active' : ''} href="/settings"><span className="sidebar-nav-icon" aria-hidden="true">⚙</span><span>Settings</span></a>
         </nav>
       </aside>
 
