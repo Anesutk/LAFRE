@@ -1,3 +1,4 @@
+'use client';
 import Link from 'next/link';
 import LafreShell from '../prototype/components/LafreShell';
 import {mentorship} from '../prototype/mock-api';
