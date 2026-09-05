@@ -7,10 +7,10 @@ export const posts = [
 ];
 
 export const lawyers = [
-  { slug:'tapiwa-moyo', name:'Tapiwa Moyo', firm:'Moyo Legal Practice', area:'Employment Law', location:'Harare', experience:'8+ years', rating:'4.9', reviews:128, available:true, mentorship:true, verified:true, bio:'Employment lawyer focused on workplace disputes, contracts, dismissal matters and practical dispute resolution.' },
-  { slug:'brian-chikore', name:'Brian Chikore', firm:'Chikore Chambers', area:'Commercial Law', location:'Harare', experience:'11 years', rating:'4.8', reviews:96, available:true, mentorship:true, verified:true, bio:'Commercial and contract lawyer advising businesses on transactions, agreements and disputes.' },
-  { slug:'rudo-ncube', name:'Rudo Ncube', firm:'Ncube Attorneys', area:'Family Law', location:'Bulawayo', experience:'6 years', rating:'4.9', reviews:74, available:false, mentorship:true, verified:true, bio:'Family lawyer working across family disputes, maintenance, estates and related proceedings.' },
-  { slug:'adrian-chikore', name:'Adv. Brian Chikore', firm:'Chikore Chambers', area:'Constitutional Law', location:'Harare', experience:'12 years', rating:'5.0', reviews:51, available:true, mentorship:false, verified:true, bio:'Advocate with a practice focused on constitutional, public-law and complex litigation matters.' },
+  { slug:'tapiwa-moyo', name:'Tapiwa Moyo', firm:'Moyo Legal Practice', area:'Employment Law', location:'Harare', experience:'8+ years', rating:'4.9', reviews:128, available:true, mentorship:true, verified:true, sponsored:true, phone:'+263771234001', email:'tapiwa.moyo@example.com', bio:'Employment lawyer focused on workplace disputes, contracts, dismissal matters and practical dispute resolution.' },
+  { slug:'brian-chikore', name:'Brian Chikore', firm:'Chikore Chambers', area:'Commercial Law', location:'Harare', experience:'11 years', rating:'4.8', reviews:96, available:true, mentorship:true, verified:true, sponsored:true, phone:'+263771234002', email:'brian.chikore@example.com', bio:'Commercial and contract lawyer advising businesses on transactions, agreements and disputes.' },
+  { slug:'rudo-ncube', name:'Rudo Ncube', firm:'Ncube Attorneys', area:'Family Law', location:'Bulawayo', experience:'6 years', rating:'4.9', reviews:74, available:false, mentorship:true, verified:true, sponsored:false, phone:'+263771234003', email:'rudo.ncube@example.com', bio:'Family lawyer working across family disputes, maintenance, estates and related proceedings.' },
+  { slug:'adrian-chikore', name:'Adv. Brian Chikore', firm:'Chikore Chambers', area:'Constitutional Law', location:'Harare', experience:'12 years', rating:'5.0', reviews:51, available:true, mentorship:false, verified:true, sponsored:false, phone:'+263771234004', email:'adrian.chikore@example.com', bio:'Advocate with a practice focused on constitutional, public-law and complex litigation matters.' },
 ];
 
 export const requests = [
@@ -26,8 +26,19 @@ export const messages = [
 ];
 
 export const mentorship = [
-  { id:'ment1', title:'Career Guidance in Law', mentor:'Adv. Brian Chikore', area:'Career Development', students:12, weeks:6, description:'A private programme covering practice areas, CVs, interviews, professional conduct and early legal careers.' },
-  { id:'ment2', title:'Starting Your Legal Career', mentor:'Tapiwa Moyo', area:'Professional Development', students:8, weeks:4, description:'Practical discussions about law-firm life, client work, workplace skills and building a sustainable legal career.' },
+  { id:'ment1', title:'Career Guidance in Law', mentor:'Adv. Brian Chikore', area:'Career Development', students:12, weeks:6, free:true, description:'A private programme covering practice areas, CVs, interviews, professional conduct and early legal careers.', topics:['How to choose a practice area','Building a strong CV and cover letter','Interview preparation and mock interviews','Professional conduct expectations'] },
+  { id:'ment2', title:'Starting Your Legal Career', mentor:'Tapiwa Moyo', area:'Professional Development', students:8, weeks:4, free:true, description:'Practical discussions about law-firm life, client work, workplace skills and building a sustainable legal career.', topics:['Day-to-day life at a law firm','Working with clients professionally','Workplace communication skills','Long-term career planning'] },
+  { id:'ment3', title:'Contract Drafting Fundamentals', mentor:'Rudo Ncube', area:'Practical Skills', students:5, weeks:5, free:true, description:'A hands-on programme walking through how real contracts are drafted, reviewed and negotiated.', topics:['Reading and structuring a contract','Common clauses and what they mean','Reviewing a contract for risk','Basic negotiation principles'] },
+];
+export const mentorshipMaterials = [
+  { title:'Week 1 slides — Introduction', type:'PDF' },
+  { title:'CV template (editable)', type:'DOCX' },
+  { title:'Recommended reading list', type:'Link' },
+];
+export const mentorshipMessages = [
+  { author:'Adv. Brian Chikore', role:'lawyer', time:'3 days ago', text:'Welcome everyone! Please introduce yourself and share what you hope to get out of this programme.' },
+  { author:'Tendai M.', role:'student', time:'3 days ago', text:'Excited to be here! Hoping to learn more about interview prep.' },
+  { author:'Adv. Brian Chikore', role:'lawyer', time:'1 day ago', text:'Great - I have added the Week 1 slides and a CV template to the materials section, please have a look before our next session.' },
 ];
 
 const wait = (value, ms = 180) => new Promise(resolve => setTimeout(() => resolve(value), ms));
