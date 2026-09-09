@@ -289,3 +289,8 @@ EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", "1")
 EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", "0")
 EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "20"))
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
+
+# Optional comma-separated override for who receives "new account awaiting
+# verification" emails. If unset, accounts.emails.get_admin_emails() falls
+# back to every Django staff/superuser plus approved LAFRE admin profiles.
+ADMIN_NOTIFICATION_EMAILS = os.environ.get("ADMIN_NOTIFICATION_EMAILS", "")

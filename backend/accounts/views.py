@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .auth import get_user_from_request, is_admin_user
+from .emails import send_account_approved_email, send_admin_verification_email
 from .models import ManualAccessToken, PasswordResetToken, UserProfile
 from .serializers import (
     CitizenRegisterSerializer,
@@ -87,7 +88,7 @@ def suggested_redirect(profile: UserProfile | None, requested_module: str | None
     if not profile:
         return "/login"
     if not profile.is_active_for_platform():
-        return "/pending" if requested_module in {"student", "citizen", "lawyer", "admin"} else "/pending-approval"
+        return "/pending"
     if requested_module == "student":
         return "/chat" if profile.can_use_student else "/access-denied"
     if requested_module == "citizen":
@@ -155,6 +156,7 @@ class ModuleRegisterCompleteView(APIView):
             related_user=user,
             metadata={"module": profile.role},
         )
+        send_admin_verification_email(user, profile)
         return Response({
             "ok": True,
             "success": True,
@@ -163,7 +165,7 @@ class ModuleRegisterCompleteView(APIView):
             "redirect_to": (
                 "/chat" if profile.role == "student" and getattr(settings, "AUTO_APPROVE_SIGNUPS", False)
                 else "/pending" if profile.role in {"student", "citizen"}
-                else "/pending-approval"
+                else "/pending"
             ),
         }, status=status.HTTP_201_CREATED)
 
@@ -200,6 +202,7 @@ class ModuleRegisterView(APIView):
             related_user=user,
             metadata={"module": profile.role},
         )
+        send_admin_verification_email(user, profile)
         return Response({
             "ok": True,
             "success": True,
@@ -208,7 +211,7 @@ class ModuleRegisterView(APIView):
             "redirect_to": (
                 "/chat" if profile.role == "student" and getattr(settings, "AUTO_APPROVE_SIGNUPS", False)
                 else "/pending" if profile.role in {"student", "citizen"}
-                else "/pending-approval"
+                else "/pending"
             ),
         }, status=status.HTTP_201_CREATED)
 
@@ -378,8 +381,11 @@ class AdminApproveUserView(APIView):
             profile = user.lafre_profile
         except Exception:
             return Response({"ok": False, "detail": "User not found."}, status=404)
+        was_already_approved = profile.status == UserProfile.Status.APPROVED
         profile.status = UserProfile.Status.APPROVED
         profile.approved_by = admin
         profile.approved_at = timezone.now()
         profile.save(update_fields=["status", "approved_by", "approved_at", "updated_at"])
+        if not was_already_approved:
+            send_account_approved_email(user, profile)
         return Response({"ok": True, "profile": UserProfileSerializer(profile).data})

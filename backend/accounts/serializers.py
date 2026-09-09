@@ -101,12 +101,15 @@ def split_name(full_name: str):
 
 
 def module_home_for_role(role: str) -> str:
+    # These must match real routes in frontend/lafre/app/** — there is no
+    # /citizen/home, /lawyer/home or /admin/home route in the Next.js app,
+    # so sending users there after login left them on a 404 page.
     return {
-        UserProfile.Role.STUDENT: "/home",
-        UserProfile.Role.CITIZEN: "/citizen/home",
-        UserProfile.Role.LAWYER: "/lawyer/home",
-        UserProfile.Role.ADMIN: "/admin/home",
-    }.get(role, "/")
+        UserProfile.Role.STUDENT: "/chat",
+        UserProfile.Role.CITIZEN: "/dashboards/civilian",
+        UserProfile.Role.LAWYER: "/dashboards/lawyer",
+        UserProfile.Role.ADMIN: "/admin",
+    }.get(role, "/home")
 
 
 def normalise_email(value: str) -> str:

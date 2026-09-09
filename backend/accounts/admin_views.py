@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .auth import get_user_from_request, is_admin_user
+from .emails import send_account_approved_email, send_account_rejected_email
 from .models import UserProfile
 from .serializers import DEFAULT_LIMITS, ROLE_TO_FLAGS, UserProfileSerializer
 
@@ -135,16 +136,22 @@ class AdminUserDetailView(APIView):
         profile = self.get_profile(user_id)
         if not profile:
             return Response({"ok": False, "detail": "User not found."}, status=404)
+        previous_status = profile.status
         role_preset = request.data.get("role_preset")
         if role_preset in ROLE_TO_FLAGS:
             apply_role_preset(profile, role_preset)
         for field in SAFE_PROFILE_FIELDS:
             if field in request.data:
                 setattr(profile, field, request.data[field])
-        if profile.status == UserProfile.Status.APPROVED and not profile.approved_at:
+        newly_approved = profile.status == UserProfile.Status.APPROVED and previous_status != UserProfile.Status.APPROVED
+        if newly_approved and not profile.approved_at:
             profile.approved_at = timezone.now()
             profile.approved_by = admin
         profile.save()
+        if newly_approved:
+            send_account_approved_email(profile.user, profile)
+        elif profile.status == UserProfile.Status.REJECTED and previous_status != UserProfile.Status.REJECTED:
+            send_account_rejected_email(profile.user, profile)
         return Response({"ok": True, "profile": profile_row(profile)})
 
 
@@ -163,9 +170,12 @@ class AdminUserQuickApproveView(APIView):
             profile = UserProfile.objects.select_related("user").get(user_id=user_id)
         except UserProfile.DoesNotExist:
             return Response({"ok": False, "detail": "User not found."}, status=404)
+        was_already_approved = profile.status == UserProfile.Status.APPROVED
         apply_role_preset(profile, profile.requested_role or profile.role)
         profile.status = UserProfile.Status.APPROVED
         profile.approved_by = admin
         profile.approved_at = timezone.now()
         profile.save()
+        if not was_already_approved:
+            send_account_approved_email(profile.user, profile)
         return Response({"ok": True, "profile": profile_row(profile)})
