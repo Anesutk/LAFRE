@@ -11,12 +11,14 @@ from django.db import OperationalError, transaction
 from django.http import FileResponse, HttpResponse
 from django.utils.crypto import get_random_string
 from django.utils import timezone
+from django.utils.text import slugify
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.auth import get_user_from_request, is_admin_user
 from accounts.models import UserProfile
+from accounts.serializers import create_lafre_user, split_name
 from .lending_pathway import default_document, fill_placeholders, context as loan_context, extract_template_text
 from .models import (
     AdminNotification,
@@ -82,6 +84,14 @@ def parse_decimal(value, default="0") -> Decimal:
 def parse_date(value):
     if not value:
         return None
+
+
+    def normalise_lawyer_lists(data):
+        for field in ("practice_areas", "services", "languages", "verification_documents"):
+            value = data.get(field)
+            if isinstance(value, str):
+                data[field] = [item.strip() for item in value.split(",") if item.strip()]
+        return data
     try:
         return date.fromisoformat(str(value)[:10])
     except Exception:
@@ -459,19 +469,38 @@ class AdminLawyersView(APIView):
         if error:
             return error
         data = request.data.copy()
+        data = normalise_lawyer_lists(data)
         email = (data.get("email") or "").strip().lower()
         if not email:
             return Response({"ok": False, "detail": "A professional email is required to create a portal account.", "errors": {"email": ["A professional email is required."]}}, status=400)
         if User.objects.filter(email__iexact=email).exists() or Lawyer.objects.filter(email__iexact=email).exists():
             return Response({"ok": False, "detail": "A user or lawyer with this email already exists.", "errors": {"email": ["This email is already in use."]}}, status=400)
         password = data.pop("initial_password", "") or get_random_string(14)
+        full_name = (data.get("full_name") or "").strip()
+        base_slug = slugify(data.get("slug") or full_name)
+        if not base_slug:
+            return Response({"ok": False, "detail": "Full name is required so the profile slug can be generated.", "errors": {"full_name": ["Enter the lawyer's full name."]}}, status=400)
+        candidate_slug = base_slug
+        suffix = 2
+        while Lawyer.objects.filter(slug=candidate_slug).exists():
+            candidate_slug = f"{base_slug}-{suffix}"
+            suffix += 1
+        data["slug"] = candidate_slug
         with transaction.atomic():
             serializer = LawyerSerializer(data=data)
             serializer.is_valid(raise_exception=True)
-            user = User.objects.create_user(username=email, email=email, password=password, first_name=data.get("full_name", "").strip())
+            first_name, last_name = split_name(full_name)
+            user = create_lafre_user(
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                role=UserProfile.Role.LAWYER,
+                phone=data.get("phone", ""),
+            )
             profile = user.lafre_profile
-            profile.role = profile.requested_role = "lawyer"
-            profile.status = "approved"
+            profile.role = profile.requested_role = UserProfile.Role.LAWYER
+            profile.status = UserProfile.Status.APPROVED
             profile.can_access_lawyer_portal = True
             profile.can_use_civilian = True
             profile.approved_by = admin
@@ -483,7 +512,13 @@ class AdminLawyersView(APIView):
             f"Your LAFRE lawyer account has been created.\n\nEmail: {email}\nTemporary password: {password}\n\nSign in at {getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000')}/lawyer/login. Please change this password after signing in.",
             getattr(settings, "DEFAULT_FROM_EMAIL", "no-reply@lafre.local"), [email], fail_silently=True,
         )
-        return Response({"ok": True, "lawyer": LawyerSerializer(lawyer).data, "credentials_sent": True}, status=201)
+        return Response({
+            "ok": True,
+            "lawyer": LawyerSerializer(lawyer).data,
+            "credentials_sent": True,
+            "login_email": email,
+            "temporary_password": password,
+        }, status=201)
 
 
 class AdminLawyerDetailView(APIView):
@@ -497,7 +532,8 @@ class AdminLawyerDetailView(APIView):
         lawyer = Lawyer.objects.filter(pk=pk).first()
         if not lawyer:
             return Response({"ok": False, "detail": "Lawyer not found."}, status=404)
-        serializer = LawyerSerializer(lawyer, data=request.data, partial=True)
+        data = normalise_lawyer_lists(request.data.copy())
+        serializer = LawyerSerializer(lawyer, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         lawyer = serializer.save()
         return Response({"ok": True, "lawyer": LawyerSerializer(lawyer).data})

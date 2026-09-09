@@ -1,4 +1,4 @@
-from django.urls import path
+m django.urls import path
 from .views import (
     AssignmentUploadView,
     FlashcardDeckListView,
