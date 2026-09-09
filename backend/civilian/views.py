@@ -84,18 +84,18 @@ def parse_decimal(value, default="0") -> Decimal:
 def parse_date(value):
     if not value:
         return None
-
-
-    def normalise_lawyer_lists(data):
-        for field in ("practice_areas", "services", "languages", "verification_documents"):
-            value = data.get(field)
-            if isinstance(value, str):
-                data[field] = [item.strip() for item in value.split(",") if item.strip()]
-        return data
     try:
         return date.fromisoformat(str(value)[:10])
     except Exception:
         return None
+
+
+def normalise_lawyer_lists(data):
+    for field in ("practice_areas", "services", "languages", "verification_documents"):
+        value = data.get(field)
+        if isinstance(value, str):
+            data[field] = [item.strip() for item in value.split(",") if item.strip()]
+    return data
 
 
 def add_months(start: date, months: int) -> date:
