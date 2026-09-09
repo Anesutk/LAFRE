@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import calendar
+import logging
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 
@@ -39,6 +40,8 @@ from .serializers import (
     MatterAttachmentSerializer,
     PathwayDocumentTemplateSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def require_citizen(request):
@@ -507,15 +510,22 @@ class AdminLawyersView(APIView):
             profile.approved_at = timezone.now()
             profile.save()
             lawyer = serializer.save(user=user)
-        send_mail(
-            "Your LAFRE lawyer portal access",
-            f"Your LAFRE lawyer account has been created.\n\nEmail: {email}\nTemporary password: {password}\n\nSign in at {getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000')}/login. Please change this password after signing in.",
-            getattr(settings, "DEFAULT_FROM_EMAIL", "no-reply@lafre.local"), [email], fail_silently=True,
-        )
+        email_error = ""
+        try:
+            sent_count = send_mail(
+                "Your LAFRE lawyer portal access",
+                f"Your LAFRE lawyer account has been created.\n\nEmail: {email}\nTemporary password: {password}\n\nSign in at {getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000')}/login. Please change this password after signing in.",
+                getattr(settings, "DEFAULT_FROM_EMAIL", "no-reply@lafre.local"), [email], fail_silently=False,
+            )
+        except Exception as exc:
+            sent_count = 0
+            email_error = str(exc)
+            logger.exception("Could not send lawyer credentials to %s", email)
         return Response({
             "ok": True,
             "lawyer": LawyerSerializer(lawyer).data,
-            "credentials_sent": True,
+            "credentials_sent": sent_count == 1,
+            "email_error": email_error,
             "login_email": email,
             "temporary_password": password,
         }, status=201)
