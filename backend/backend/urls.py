@@ -15,6 +15,7 @@ urlpatterns = [
     path("api/students/", include("students.urls")),
     path("api/civilian/", include("civilian.urls")),
     path("api/citizens/", include("citizens.urls")),
+    path("api/forum/", include("forum.urls")),
 ]
 
 if settings.DEBUG:

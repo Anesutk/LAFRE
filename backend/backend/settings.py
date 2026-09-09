@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     "students",
     "civilian",
     "citizens",
+    "forum",
 ]
 
 

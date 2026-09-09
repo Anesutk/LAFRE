@@ -266,6 +266,45 @@ function HomeInner() {
 
       <main className={styles.main}>
         {showFindLawyer && role === 'civilian' ? <FindLawyerFlow onClose={() => setShowFindLawyer(false)} /> : <>
+          <div className={styles.scrollArea}>
+            <div className={styles.pills}>
+              <button className={community === 'all' ? styles.pillActive : ''} onClick={() => setCommunity('all')}>All</button>
+              {communities.map((c) => <button key={c.key} className={community === c.key ? styles.pillActive : ''} onClick={() => setCommunity(c.key)}>{c.name}</button>)}
+            </div>
+
+            <div className={styles.feed}>
+              {visible.map((p) => {
+                const c = communityByKey[p.community];
+                return <article key={p.id} className={p.id === newPostId ? styles.post + ' ' + styles.postNew : styles.post}>
+                  <div className={styles.vote}>
+                    <button onClick={() => toggle(setLiked, p.id)} className={liked.includes(p.id) ? styles.voted : ''}>↑</button>
+                    <b>{p.likes + (liked.includes(p.id) ? 1 : 0)}</b>
+                    <button>↓</button>
+                  </div>
+                  <div className={styles.postBody}>
+                    <div className={styles.meta}>
+                      <span className={styles.avatar} style={{ background: avatarColor(p.user) }}>{initials(p.user)}</span>
+                      <span><b>{p.user}</b> · {p.role === 'student' ? <strong className={styles.student}>★ Law Student</strong> : 'Public user'} · {p.time}</span>
+                    </div>
+                    <a href="#" className={styles.postTitle}>{p.title}</a>
+                    <div>{c && <span className={styles.communityTag} style={{ background: c.color + '1a', color: c.color }}><span className={styles.communityDot} style={{ background: c.color }} /> {c.name}</span>}{p.studentOnly && <span className={styles.lawyerOnly}>Lawyer responses only</span>}</div>
+                    <p className={styles.excerpt}>{p.text}</p>
+                    <div className={styles.actions}>
+                      <button>◌ {p.replies} Replies</button>
+                      <button>◉ {p.views}</button>
+                      <button onClick={() => toggle(setSaved, p.id)} className={saved.includes(p.id) ? styles.saved : ''}>♡ {saved.includes(p.id) ? 'Saved' : 'Save'}</button>
+                      <button>↗ Share</button>
+                    </div>
+                  </div>
+                </article>;
+              })}
+              {!visible.length && <div className={styles.empty}>No discussions match your current search or community.</div>}
+            </div>
+          </div>
+
+          {/* Composer now sits fixed at the bottom, like every other chat/forum app - it
+              used to be the first thing at the top of the page, which read unusually
+              compared to how a "type here" box normally behaves. */}
           <div className={styles.composer}>
             <textarea rows={2} placeholder={role === 'student' ? 'Ask a quick legal question…' : 'Ask a legal question or start a discussion...'} value={draft} onChange={(e) => setDraft(e.target.value)} disabled={flowStep !== 'idle'} />
             <div className={styles.composerFoot}>
@@ -292,40 +331,6 @@ function HomeInner() {
                 <p>{suggestedLawyer.area} · ★ {suggestedLawyer.rating} ({suggestedLawyer.reviews} reviews) — may be a good fit for this question.</p>
               </div>
             </div>}
-          </div>
-
-          <div className={styles.pills}>
-            <button className={community === 'all' ? styles.pillActive : ''} onClick={() => setCommunity('all')}>All</button>
-            {communities.map((c) => <button key={c.key} className={community === c.key ? styles.pillActive : ''} onClick={() => setCommunity(c.key)}>{c.name}</button>)}
-          </div>
-
-          <div className={styles.feed}>
-            {visible.map((p) => {
-              const c = communityByKey[p.community];
-              return <article key={p.id} className={p.id === newPostId ? styles.post + ' ' + styles.postNew : styles.post}>
-                <div className={styles.vote}>
-                  <button onClick={() => toggle(setLiked, p.id)} className={liked.includes(p.id) ? styles.voted : ''}>↑</button>
-                  <b>{p.likes + (liked.includes(p.id) ? 1 : 0)}</b>
-                  <button>↓</button>
-                </div>
-                <div className={styles.postBody}>
-                  <div className={styles.meta}>
-                    <span className={styles.avatar} style={{ background: avatarColor(p.user) }}>{initials(p.user)}</span>
-                    <span><b>{p.user}</b> · {p.role === 'student' ? <strong className={styles.student}>★ Law Student</strong> : 'Public user'} · {p.time}</span>
-                  </div>
-                  <a href="#" className={styles.postTitle}>{p.title}</a>
-                  <div>{c && <span className={styles.communityTag} style={{ background: c.color + '1a', color: c.color }}><span className={styles.communityDot} style={{ background: c.color }} /> {c.name}</span>}{p.studentOnly && <span className={styles.lawyerOnly}>Lawyer responses only</span>}</div>
-                  <p className={styles.excerpt}>{p.text}</p>
-                  <div className={styles.actions}>
-                    <button>◌ {p.replies} Replies</button>
-                    <button>◉ {p.views}</button>
-                    <button onClick={() => toggle(setSaved, p.id)} className={saved.includes(p.id) ? styles.saved : ''}>♡ {saved.includes(p.id) ? 'Saved' : 'Save'}</button>
-                    <button>↗ Share</button>
-                  </div>
-                </div>
-              </article>;
-            })}
-            {!visible.length && <div className={styles.empty}>No discussions match your current search or community.</div>}
           </div>
         </>}
       </main>
