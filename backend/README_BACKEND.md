@@ -82,6 +82,24 @@ python manage.py create_lafre_admin --email admin@example.com --password "Change
 
 ## Frontend connection
 
+## Gmail SMTP email delivery
+
+Set these variables in Render to send lawyer credentials and password-reset emails from `lafrebox@gmail.com`:
+
+```env
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=1
+EMAIL_USE_SSL=0
+EMAIL_TIMEOUT=20
+EMAIL_HOST_USER=lafrebox@gmail.com
+EMAIL_HOST_PASSWORD=your-16-character-google-app-password
+DEFAULT_FROM_EMAIL=lafrebox@gmail.com
+```
+
+`EMAIL_HOST_PASSWORD` must be a Google App Password. Do not use the normal Gmail password and do not commit the App Password to Git.
+
 In Vercel/your deployed frontend, set:
 
 ```env

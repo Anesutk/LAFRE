@@ -509,7 +509,7 @@ class AdminLawyersView(APIView):
             lawyer = serializer.save(user=user)
         send_mail(
             "Your LAFRE lawyer portal access",
-            f"Your LAFRE lawyer account has been created.\n\nEmail: {email}\nTemporary password: {password}\n\nSign in at {getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000')}/lawyer/login. Please change this password after signing in.",
+            f"Your LAFRE lawyer account has been created.\n\nEmail: {email}\nTemporary password: {password}\n\nSign in at {getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000')}/login. Please change this password after signing in.",
             getattr(settings, "DEFAULT_FROM_EMAIL", "no-reply@lafre.local"), [email], fail_silently=True,
         )
         return Response({
