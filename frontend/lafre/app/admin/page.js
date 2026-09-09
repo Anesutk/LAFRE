@@ -1,196 +1,60 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
-import { apiFetch, getProfile, redirectTo, saveAuth } from '../lib/api';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { apiFetch, clearAuth, getProfile, redirectTo, saveAuth } from '../lib/api';
+import styles from './admin.module.css';
 
-function StatCard({ label, value }) {
-  return <div className="admin-stat"><b>{value ?? '—'}</b><span>{label}</span></div>;
+const nav = [
+  ['OVERVIEW', [['dashboard','▦','Dashboard']]],
+  ['PEOPLE', [['users','♙','Users'],['lawyers','★','Lawyers']]],
+  ['LEGAL SERVICES', [['reviews','▤','Document reviews'],['matters','⌂','Legal matters']]],
+  ['AI & CONTENT', [['knowledge','✦','Knowledge base'],['content','◈','Public content']]],
+  ['SYSTEM', [['settings','⚙','Settings']]],
+];
+
+function statusClass(status){return `${styles.status} ${styles[status] || styles.neutral}`}
+function Stat({label,value,accent}){return <div className={styles.stat}><div className={styles.statTop}><span>{label}</span><span className={accent?styles.statAccent:'★' }>•</span></div><div className={styles.statValue}>{value ?? '—'}</div></div>}
+function fmtDate(v){if(!v)return '—';try{return new Date(v).toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'})}catch{return '—'}}
+function arr(v){return Array.isArray(v)?v:(v?Object.values(v):[])}
+
+function LoginModal({onLoggedIn}){
+  const [email,setEmail]=useState(''); const [password,setPassword]=useState(''); const [busy,setBusy]=useState(false); const [error,setError]=useState('');
+  async function submit(e){e.preventDefault();setBusy(true);setError('');try{const res=await apiFetch('/accounts/admin/login/',{method:'POST',body:JSON.stringify({email,password})});saveAuth(res);onLoggedIn(res.profile);}catch(err){setError(err.message||'Admin sign-in failed.')}finally{setBusy(false)}}
+  return <div className={styles.modalBackdrop}><form className={styles.login} onSubmit={submit}><div className={styles.loginMark}>⚖</div><h1>LAFRE Admin</h1><p>Sign in with the existing Django superuser account. No separate admin account is created here.</p>{error&&<div className={styles.error}>{error}</div>}<div className={styles.field}><label>Admin email</label><input autoFocus type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="superuser email" required /></div><div className={styles.field}><label>Password</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Superuser password" required /></div><button className={styles.loginBtn} disabled={busy}>{busy?'Signing in…':'Sign in to Admin'}</button><div className={styles.hint}>Admin access is validated by the existing backend superuser permission.</div></form></div>
 }
 
-function StatusBadge({ status }) {
-  return <span className={`admin-badge admin-badge-${status}`}>{status}</span>;
-}
+function PasswordModal({title,onConfirm,onClose}){const [password,setPassword]=useState('');const [busy,setBusy]=useState(false);const [error,setError]=useState('');async function go(){setBusy(true);setError('');try{await onConfirm(password)}catch(e){setError(e.message||'Action failed.')}finally{setBusy(false)}}return <div className={styles.modalBackdrop} onMouseDown={onClose}><div className={styles.login} onMouseDown={e=>e.stopPropagation()}><h1 style={{fontSize:24}}>{title}</h1><p>For security, this action requires the current superuser password.</p>{error&&<div className={styles.error}>{error}</div>}<div className={styles.field}><label>Confirm password</label><input autoFocus type="password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==='Enter'&&password&&go()} /></div><div style={{display:'flex',gap:8}}><button className={styles.ghost} onClick={onClose}>Cancel</button><button className={styles.loginBtn} style={{flex:1}} disabled={!password||busy} onClick={go}>{busy?'Confirming…':'Confirm action'}</button></div></div></div>}
 
-function PasswordPrompt({ title, onConfirm, onCancel }) {
-  const [password, setPassword] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const submit = async () => {
-    setBusy(true); setError('');
-    try { await onConfirm(password); } catch (err) { setError(err.message || 'Action failed.'); } finally { setBusy(false); }
-  };
-  return <div className="admin-modal-backdrop" onClick={onCancel}>
-    <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
-      <h3>{title}</h3>
-      <p>Confirm your admin password to continue — this action changes account access.</p>
-      <input type="password" placeholder="Your password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
-      {error ? <p className="admin-modal-error">{error}</p> : null}
-      <div className="admin-modal-actions">
-        <button type="button" className="admin-btn-ghost" onClick={onCancel} disabled={busy}>Cancel</button>
-        <button type="button" className="admin-btn-solid" onClick={submit} disabled={busy || !password}>{busy ? 'Confirming…' : 'Confirm'}</button>
-      </div>
-    </div>
-  </div>;
-}
+function Dashboard({dashboard,onNavigate}){const s=dashboard?.stats||{};return <><div className={styles.heading}><div><div className={styles.eyebrow}>Platform overview</div><div className={styles.title}>Good to see you, Admin.</div><div className={styles.subtitle}>Monitor LAFRE accounts, lawyers and legal-service activity from one place.</div></div><button className={styles.primary} onClick={()=>onNavigate('users')}>Review accounts →</button></div><div className={styles.stats}><Stat label="Pending students" value={s.pending_students}/><Stat label="Pending citizens" value={s.pending_citizens}/><Stat label="Approved students" value={s.approved_students}/><Stat label="Approved citizens" value={s.approved_citizens}/><Stat label="Lawyers" value={s.lawyers} accent/><Stat label="Suspended" value={s.suspended_users}/></div><div className={styles.grid}><section className={`${styles.card} ${styles.attention}`}><div className={styles.cardHead}><div className={styles.cardTitle}>Needs attention</div><span className={styles.cardMeta}>Today’s queue</span></div><div className={styles.queue}>{(dashboard?.today_queue||[]).length?(dashboard.today_queue.map(x=><div className={styles.queueRow} key={x.user_id}><div className={styles.queueInfo}><b>{x.name||'Unnamed user'}</b><span>{x.email} · {x.title||'Pending account'}</span></div><button className={styles.ghost} onClick={()=>onNavigate('users')}>Review</button></div>)):<div className={styles.empty}>Nothing urgent is waiting in the account approval queue.</div>}</div></section><section className={styles.card}><div className={styles.cardHead}><div className={styles.cardTitle}>Quick access</div></div><div className={styles.list}>{[['lawyers','Manage lawyers'],['reviews','Document review queue'],['matters','Legal matters'],['knowledge','AI knowledge alerts'],['content','Public content'],['settings','Platform settings']].map(([id,label])=><button key={id} className={styles.navBtn} style={{padding:'13px 17px',borderRadius:0}} onClick={()=>onNavigate(id)}><span className={styles.icon}>→</span>{label}</button>)}</div></section></div></>}
 
-export default function AdminPage() {
-  const [mounted, setMounted] = useState(false);
-  const [profile, setProfile] = useState(null);
-  const [dashboard, setDashboard] = useState(null);
-  const [users, setUsers] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('pending');
-  const [roleFilter, setRoleFilter] = useState('');
-  const [query, setQuery] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [pendingAction, setPendingAction] = useState(null); // { type: 'approve'|'save', userId, payload }
-  const [selected, setSelected] = useState(null);
-  const [notice, setNotice] = useState('');
+function Users({users,onSelect,onApprove,loading}){const [q,setQ]=useState('');const [status,setStatus]=useState('');const [role,setRole]=useState('');const filtered=useMemo(()=>users.filter(u=>(!q||`${u.full_name} ${u.email}`.toLowerCase().includes(q.toLowerCase()))&&(!status||u.status===status)&&(!role||u.role===role)),[users,q,status,role]);return <><div className={styles.heading}><div><div className={styles.eyebrow}>People</div><div className={styles.title}>Users</div><div className={styles.subtitle}>Review account status, roles, access and usage.</div></div></div><div className={styles.toolbar}><input className={styles.input} placeholder="Search name or email…" value={q} onChange={e=>setQ(e.target.value)}/><select className={styles.select} value={status} onChange={e=>setStatus(e.target.value)}><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="suspended">Suspended</option><option value="rejected">Rejected</option></select><select className={styles.select} value={role} onChange={e=>setRole(e.target.value)}><option value="">All roles</option><option value="student">Student</option><option value="citizen">Citizen</option><option value="lawyer">Lawyer</option><option value="admin">Admin</option></select></div><section className={styles.card}><div className={styles.cardHead}><div className={styles.cardTitle}>Account directory</div><span className={styles.cardMeta}>{filtered.length} shown</span></div><div className={styles.tableWrap}>{loading?<div className={styles.loading}>Loading accounts…</div>:<table className={styles.table}><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th/></tr></thead><tbody>{filtered.map(u=><tr key={u.id}><td className={styles.name}>{u.full_name||'—'}</td><td className={styles.muted}>{u.email}</td><td>{u.role}</td><td><span className={statusClass(u.status)}>{u.status}</span></td><td>{fmtDate(u.created_at)}</td><td><button className={styles.ghost} onClick={()=>onSelect(u)}>View</button>{u.status==='pending'&&<button className={styles.primary} style={{marginLeft:6,padding:'7px 9px'}} onClick={()=>onApprove(u)}>Approve</button>}</td></tr>)}{!filtered.length&&<tr><td colSpan="6" className={styles.empty}>No accounts match these filters.</td></tr>}</tbody></table>}</div></section></>}
 
-  const loadDashboard = useCallback(async () => {
-    try { setDashboard(await apiFetch('/accounts/admin/dashboard/')); } catch { /* ignore, shown via users list regardless */ }
-  }, []);
+function Lawyers({lawyers,onCreate,onSelect,loading}){const [q,setQ]=useState('');const filtered=lawyers.filter(l=>`${l.full_name} ${l.firm_name} ${l.city}`.toLowerCase().includes(q.toLowerCase()));return <><div className={styles.heading}><div><div className={styles.eyebrow}>People</div><div className={styles.title}>Lawyers</div><div className={styles.subtitle}>Manage professional profiles, verification and availability.</div></div><button className={styles.primary} onClick={onCreate}>+ Add lawyer</button></div><div className={styles.toolbar}><input className={styles.input} placeholder="Search lawyer, firm or city…" value={q} onChange={e=>setQ(e.target.value)}/></div><section className={styles.card}><div className={styles.cardHead}><div className={styles.cardTitle}>Lawyer directory</div><span className={styles.cardMeta}>{filtered.length} profiles</span></div><div className={styles.tableWrap}>{loading?<div className={styles.loading}>Loading lawyers…</div>:<table className={styles.table}><thead><tr><th>Lawyer</th><th>Firm</th><th>Practice areas</th><th>Location</th><th>Verification</th><th/></tr></thead><tbody>{filtered.map(l=><tr key={l.id}><td><span className={styles.name}>★★★ {l.full_name}</span></td><td>{l.firm_name||'Independent'}</td><td className={styles.muted}>{arr(l.practice_areas).slice(0,2).join(', ')||'—'}</td><td>{[l.city,l.province].filter(Boolean).join(', ')||'—'}</td><td><span className={statusClass(l.verified?'verified':'pending')}>{l.verified?'Verified':'Unverified'}</span></td><td><button className={styles.ghost} onClick={()=>onSelect(l)}>View / edit</button></td></tr>)}{!filtered.length&&<tr><td colSpan="6" className={styles.empty}>No lawyers found.</td></tr>}</tbody></table>}</div></section></>}
 
-  const loadUsers = useCallback(async () => {
-    const params = new URLSearchParams();
-    if (statusFilter) params.set('status', statusFilter);
-    if (roleFilter) params.set('role', roleFilter);
-    if (query.trim()) params.set('q', query.trim());
-    try {
-      const res = await apiFetch(`/accounts/admin/users/?${params.toString()}`);
-      setUsers(res.users || []);
-    } catch (err) {
-      setNotice(err.message || 'Could not load users.');
-    }
-  }, [statusFilter, roleFilter, query]);
+function Reviews({reviews,loading,onSelect}){return <><div className={styles.heading}><div><div className={styles.eyebrow}>Legal services</div><div className={styles.title}>Document reviews</div><div className={styles.subtitle}>Track submitted documents and lawyer assignment status.</div></div></div><section className={styles.card}><div className={styles.cardHead}><div className={styles.cardTitle}>Review queue</div><span className={styles.cardMeta}>{reviews.length} requests</span></div><div className={styles.tableWrap}>{loading?<div className={styles.loading}>Loading review queue…</div>:<table className={styles.table}><thead><tr><th>Request</th><th>Type</th><th>Status</th><th>Assigned lawyer</th><th>Created</th><th/></tr></thead><tbody>{reviews.map(r=><tr key={r.id}><td className={styles.name}>#{r.id} · {r.document?.title||'Document'}</td><td>{r.review_type||'Review'}</td><td><span className={statusClass(r.status)}>{String(r.status||'').replaceAll('_',' ')}</span></td><td>{r.assigned_lawyer_name||'Waiting assignment'}</td><td>{fmtDate(r.created_at)}</td><td><button className={styles.ghost} onClick={()=>onSelect(r)}>Inspect</button></td></tr>)}{!reviews.length&&<tr><td colSpan="6" className={styles.empty}>No document review requests.</td></tr>}</tbody></table>}</div></section></>}
 
-  useEffect(() => {
-    setMounted(true);
-    const cached = getProfile();
-    if (!cached) { redirectTo('/login'); return; }
-    setProfile(cached); // show something immediately while the fresh check runs
-    // Never trust the cached profile alone for an admin gate - it's whatever was true at
-    // last login, and can go stale the moment someone's is_superuser flag changes without
-    // them logging out and back in. Always re-check against the live account first.
-    apiFetch('/accounts/me/').then((res) => {
-      const fresh = res.profile;
-      setProfile(fresh);
-      saveAuth({ profile: fresh }); // keep the cached copy in sync so the rest of the app sees it too
-      if (fresh?.is_superuser) {
-        Promise.all([loadDashboard(), loadUsers()]).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
-    }).catch(() => {
-      // Session may have expired - fall back to the cached value rather than hard-failing,
-      // the render below still gates correctly either way.
-      setLoading(false);
-    });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+function Matters({matters,loading}){return <><div className={styles.heading}><div><div className={styles.eyebrow}>Legal services</div><div className={styles.title}>Legal matters</div><div className={styles.subtitle}>Overview of civilian legal matters received by the platform.</div></div></div><section className={styles.card}><div className={styles.cardHead}><div className={styles.cardTitle}>Matter queue</div><span className={styles.cardMeta}>{matters.length} matters</span></div><div className={styles.tableWrap}>{loading?<div className={styles.loading}>Loading matters…</div>:<table className={styles.table}><thead><tr><th>Title</th><th>Issue</th><th>City</th><th>Status</th><th>Updated</th></tr></thead><tbody>{matters.map(m=><tr key={m.id}><td className={styles.name}>{m.title||`Matter #${m.id}`}</td><td>{m.issue_type||'—'}</td><td>{m.city||'—'}</td><td><span className={statusClass(m.status)}>{m.status||'—'}</span></td><td>{fmtDate(m.updated_at)}</td></tr>)}{!matters.length&&<tr><td colSpan="5" className={styles.empty}>No legal matters returned by the backend.</td></tr>}</tbody></table>}</div></section></>}
 
-  useEffect(() => {
-    if (mounted && profile?.is_superuser) loadUsers();
-  }, [statusFilter, roleFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+function Knowledge({data,loading,onResolve}){const failures=data?.notes||[];return <><div className={styles.heading}><div><div className={styles.eyebrow}>AI & content</div><div className={styles.title}>Knowledge base</div><div className={styles.subtitle}>Review unresolved knowledge-base failures and admin alerts.</div></div></div><section className={styles.card}><div className={styles.cardHead}><div className={styles.cardTitle}>Resource alerts</div><span className={styles.cardMeta}>{failures.length} alerts</span></div>{loading?<div className={styles.loading}>Loading alerts…</div>:<div className={styles.list}>{failures.map(f=><div className={styles.queueRow} key={f.id}><div className={styles.queueInfo}><b>{f.action_needed||'Knowledge base issue'}</b><span>{f.admin_notes||'No admin note'} · {fmtDate(f.created_at)}</span></div>{!f.resolved&&<button className={styles.ghost} onClick={()=>onResolve(f)}>Mark resolved</button>}{f.resolved&&<span className={statusClass('approved')}>Resolved</span>}</div>)}{!failures.length&&<div className={styles.empty}>No knowledge-base failures are currently reported.</div>}</div>}</section></>}
 
-  const quickApprove = (user) => setPendingAction({ type: 'approve', userId: user.id, label: user.full_name || user.email });
+function Content(){return <><div className={styles.heading}><div><div className={styles.eyebrow}>AI & content</div><div className={styles.title}>Public content</div><div className={styles.subtitle}>This workspace is reserved for the existing public-content API. The current backend exposes these tools separately from the account admin API.</div></div></div><div className={styles.sectionGrid}><div className={styles.mini}><h3>Announcements</h3><p>Manage platform notices shown to public users.</p><strong>Available in backend</strong></div><div className={styles.mini}><h3>Matter cards</h3><p>Manage public legal issue entry points.</p><strong>Available in backend</strong></div><div className={styles.mini}><h3>Support resources</h3><p>Keep public legal-support resources organised.</p><strong>Backend ready</strong></div></div><div className={styles.card} style={{marginTop:14}}><div className={styles.empty}>The current uploaded backend does not expose the public-content routes in its civilian URL configuration, so this screen deliberately does not fake CRUD actions. Once those existing backend routes are exposed, this page can use them without changing the models.</div></div></>}
 
-  const runApprove = async (password) => {
-    await apiFetch(`/accounts/admin/users/${pendingAction.userId}/quick-approve/`, { method: 'POST', body: JSON.stringify({ password }) });
-    setPendingAction(null);
-    setNotice('Account approved.');
-    await Promise.all([loadDashboard(), loadUsers()]);
-  };
+function Settings(){return <><div className={styles.heading}><div><div className={styles.eyebrow}>System</div><div className={styles.title}>Settings</div><div className={styles.subtitle}>The uploaded backend currently does not expose its PlatformSetting admin route in the civilian URL configuration.</div></div></div><div className={styles.card}><div className={styles.empty}>No settings are faked here. The screen is intentionally kept ready for the existing PlatformSetting endpoint if it is exposed later, without changing any backend model or architecture.</div></div></>}
 
-  if (!mounted) return null;
+function Drawer({title,children,onClose}){return <div className={styles.drawerBackdrop} onMouseDown={onClose}><aside className={styles.drawer} onMouseDown={e=>e.stopPropagation()}><div className={styles.drawerHead}><h2>{title}</h2><button className={styles.close} onClick={onClose}>×</button></div><div className={styles.drawerBody}>{children}</div></aside></div>}
+function Detail({item,type}){if(type==='lawyer')return <div className={styles.detailGrid}>{[['Full name',item.full_name],['Firm',item.firm_name],['City',item.city],['Province',item.province],['Email',item.email],['Phone',item.phone],['Experience',`${item.years_experience||0} years`],['Consultation',item.consultation_mode],['Fee',item.consultation_fee_usd?`$${item.consultation_fee_usd}`:'Not listed'],['Availability',item.available_for_appointments?'Available':'Unavailable'],['Verification',item.verified?'Verified':'Not verified'],['Free legal aid',item.accepts_free_legal_aid?'Yes':'No'],['Practice areas',arr(item.practice_areas).join(', ')||'—'],['Services',arr(item.services).join(', ')||'—'],['Languages',arr(item.languages).join(', ')||'—'],['Bio',item.bio||'—']].map(([l,v])=><div className={`${styles.detail} ${l==='Bio'||['Practice areas','Services','Languages'].includes(l)?styles.full:''}`} key={l}><label>{l}</label><div>{String(v||'—')}</div></div>)}</div>;if(type==='review')return <div className={styles.detailGrid}>{[['Request',`#${item.id}`],['Document',item.document?.title||'—'],['Type',item.review_type],['Status',item.status],['Assigned lawyer',item.assigned_lawyer_name||'Waiting'],['Created',fmtDate(item.created_at)],['User note',item.user_note||'—'],['Admin note',item.admin_note||'—'],['Lawyer note',item.lawyer_note||'—']].map(([l,v])=><div className={`${styles.detail} ${['User note','Admin note','Lawyer note'].includes(l)?styles.full:''}`} key={l}><label>{l}</label><div>{String(v||'—')}</div></div>)}</div>;return <div className={styles.detailGrid}>{[['Name',item.full_name],['Email',item.email],['Role',item.role],['Status',item.status],['Requested role',item.requested_role],['City',item.city],['Institution',item.institution],['Student number',item.student_number],['Organisation',item.organisation],['Practice area',item.practice_area],['Joined',fmtDate(item.created_at)],['Daily messages',`${item.messages_used_today??0} / ${item.daily_message_limit??'∞'}`],['Monthly messages',`${item.messages_used_this_month??0} / ${item.monthly_message_limit??'∞'}`],['Account expiry',fmtDate(item.account_expiry)],['Admin notes',item.admin_notes||'—']].map(([l,v])=><div className={`${styles.detail} ${l==='Admin notes'?styles.full:''}`} key={l}><label>{l}</label><div>{String(v||'—')}</div></div>)}</div>}
 
-  if (!profile?.is_superuser) {
-    return <main className="admin-denied">
-      <div className="admin-denied-card">
-        <span className="admin-denied-icon">⚖</span>
-        <h1>Admin access only</h1>
-        <p>This area is restricted to super accounts. If you believe this is a mistake, contact whoever manages your LAFRE deployment.</p>
-        <a className="admin-btn-solid" href="/chat">Back to chat</a>
-      </div>
-    </main>;
-  }
-
-  return <main className="admin-shell">
-    <header className="admin-header">
-      <div className="admin-brand"><span className="admin-mark">⚖</span> LAFRE Admin</div>
-      <a href="/chat" className="admin-btn-ghost">← Back to app</a>
-    </header>
-
-    {notice ? <div className="admin-notice" onClick={() => setNotice('')}>{notice}</div> : null}
-
-    <section className="admin-stats">
-      <StatCard label="Pending students" value={dashboard?.stats?.pending_students} />
-      <StatCard label="Pending citizens" value={dashboard?.stats?.pending_citizens} />
-      <StatCard label="Approved students" value={dashboard?.stats?.approved_students} />
-      <StatCard label="Approved citizens" value={dashboard?.stats?.approved_citizens} />
-      <StatCard label="Lawyers" value={dashboard?.stats?.lawyers} />
-      <StatCard label="Suspended" value={dashboard?.stats?.suspended_users} />
-    </section>
-
-    {dashboard?.today_queue?.length ? <section className="admin-queue">
-      <h2>Awaiting approval</h2>
-      <div className="admin-queue-list">
-        {dashboard.today_queue.map((item) => <div className="admin-queue-row" key={item.user_id}>
-          <div><b>{item.name}</b><span>{item.email} · {item.title}</span></div>
-          <button type="button" className="admin-btn-solid admin-btn-sm" onClick={() => quickApprove({ id: item.user_id, full_name: item.name, email: item.email })}>Approve</button>
-        </div>)}
-      </div>
-    </section> : null}
-
-    <section className="admin-directory">
-      <div className="admin-directory-head">
-        <h2>All accounts</h2>
-        <div className="admin-filters">
-          <input placeholder="Search name or email…" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && loadUsers()} />
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="">All statuses</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="suspended">Suspended</option>
-          </select>
-          <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
-            <option value="">All roles</option>
-            <option value="student">Student</option>
-            <option value="citizen">Citizen</option>
-            <option value="lawyer">Lawyer</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
-      </div>
-
-      {loading ? <p className="admin-loading">Loading accounts…</p> : (
-        <table className="admin-table">
-          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th></th></tr></thead>
-          <tbody>
-            {users.map((u) => <tr key={u.id} onClick={() => setSelected(u)} className={selected?.id === u.id ? 'active' : ''}>
-              <td>{u.full_name}</td>
-              <td>{u.email}</td>
-              <td>{u.role}</td>
-              <td><StatusBadge status={u.status} /></td>
-              <td>{u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
-              <td>{u.status === 'pending' ? <button type="button" className="admin-btn-ghost admin-btn-sm" onClick={(e) => { e.stopPropagation(); quickApprove(u); }}>Approve</button> : null}</td>
-            </tr>)}
-            {!users.length ? <tr><td colSpan={6} className="admin-empty">No accounts match this filter.</td></tr> : null}
-          </tbody>
-        </table>
-      )}
-    </section>
-
-    {selected ? <aside className="admin-drawer">
-      <div className="admin-drawer-head"><h3>{selected.full_name}</h3><button type="button" onClick={() => setSelected(null)}>×</button></div>
-      <dl>
-        <dt>Email</dt><dd>{selected.email}</dd>
-        <dt>Role</dt><dd>{selected.role} (requested: {selected.requested_role})</dd>
-        <dt>Status</dt><dd><StatusBadge status={selected.status} /></dd>
-        <dt>Institution</dt><dd>{selected.institution || '—'}</dd>
-        <dt>Daily message limit</dt><dd>{selected.daily_message_limit ?? 'Unlimited'}</dd>
-        <dt>Messages used today</dt><dd>{selected.messages_used_today ?? 0}</dd>
-      </dl>
-      {selected.status === 'pending' ? <button type="button" className="admin-btn-solid" style={{ width: '100%' }} onClick={() => quickApprove(selected)}>Approve this account</button> : null}
-    </aside> : null}
-
-    {pendingAction?.type === 'approve' ? <PasswordPrompt title={`Approve ${pendingAction.label}?`} onConfirm={runApprove} onCancel={() => setPendingAction(null)} /> : null}
-  </main>;
+export default function AdminPage(){const [profile,setProfile]=useState(null);const [ready,setReady]=useState(false);const [section,setSection]=useState('dashboard');const [dashboard,setDashboard]=useState(null);const [users,setUsers]=useState([]);const [lawyers,setLawyers]=useState([]);const [reviews,setReviews]=useState([]);const [matters,setMatters]=useState([]);const [knowledge,setKnowledge]=useState(null);const [settings,setSettings]=useState([]);const [loading,setLoading]=useState(false);const [drawer,setDrawer]=useState(null);const [passwordAction,setPasswordAction]=useState(null);const [toast,setToast]=useState('');const [mobileOpen,setMobileOpen]=useState(false);const [lawyerForm,setLawyerForm]=useState(null);
+ const load=useCallback(async(id)=>{setLoading(true);try{if(id==='dashboard')setDashboard(await apiFetch('/accounts/admin/dashboard/'));if(id==='users'){const r=await apiFetch('/accounts/admin/users/');setUsers(r.users||[])}if(id==='lawyers'){const r=await apiFetch('/civilian/admin/lawyers/');setLawyers(r.lawyers||[])}if(id==='reviews'){const r=await apiFetch('/civilian/admin/reviews/');setReviews(r.reviews||[])}if(id==='matters'){const r=await apiFetch('/civilian/admin/citizen-matters/');setMatters(r.matters||r.citizen_matters||[])}if(id==='knowledge')setKnowledge(await apiFetch('/civilian/admin/knowledge-base/'));if(id==='settings')setSettings([])}catch(e){setToast(e.message||'Could not load this section.')}finally{setLoading(false)}},[]);
+ useEffect(()=>{const p=getProfile();if(p?.is_superuser)setProfile(p);setReady(true);if(p?.is_superuser)load('dashboard')},[load]);
+ useEffect(()=>{if(profile?.is_superuser)load(section)},[section,profile,load]);
+ useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(''),3500);return()=>clearTimeout(t)},[toast]);
+ function navTo(id){setSection(id);setMobileOpen(false);setDrawer(null)}
+ async function approve(user){setPasswordAction({title:`Approve ${user.full_name||user.email}`,run:async password=>{await apiFetch(`/accounts/admin/users/${user.id}/quick-approve/`,{method:'POST',body:JSON.stringify({password})});setToast('Account approved.');setPasswordAction(null);load('users');load('dashboard')}})}
+ async function saveSettings(){setToast('Settings are not connected because the current backend does not expose the settings route.')}
+ async function resolveFailure(){setToast('Knowledge-base editing is read-only in the current exposed backend route.')}
+ async function createLawyer(){if(!lawyerForm)return;setPasswordAction({title:'Create lawyer profile',run:async password=>{const payload={...lawyerForm,years_experience:Number(lawyerForm.years_experience||0),verified:Boolean(lawyerForm.verified),is_active:true};await apiFetch('/civilian/admin/lawyers/',{method:'POST',body:JSON.stringify(payload)});setToast('Lawyer profile created.');setPasswordAction(null);setLawyerForm(null);load('lawyers')}})}
+ async function logout(){try{await apiFetch('/accounts/logout/',{method:'POST'})}catch{}clearAuth();setProfile(null)}
+ if(!ready)return null;if(!profile?.is_superuser)return <LoginModal onLoggedIn={p=>{setProfile(p);load('dashboard')}}/>;
+ const title=nav.flatMap(g=>g[1]).find(x=>x[0]===section)?.[2]||'Dashboard';
+ return <div className={styles.page}><aside className={`${styles.sidebar} ${mobileOpen?styles.sidebarOpen:''}`}><div className={styles.brand}><div className={styles.mark}>⚖</div><div className={styles.brandText}>LAFRE<span>Administration</span></div></div><nav className={styles.nav}>{nav.map(([group,items])=><div className={styles.group} key={group}><div className={styles.label}>{group}</div>{items.map(([id,icon,label])=><button className={`${styles.navBtn} ${section===id?styles.active:''}`} key={id} onClick={()=>navTo(id)}><span className={styles.icon}>{icon}</span>{label}</button>)}</div>)}</nav><div className={styles.bottom}><button className={styles.navBtn} onClick={()=>redirectTo('/')}>↗ Back to LAFRE</button><button className={styles.navBtn} onClick={logout}>⇥ Sign out</button></div></aside><div className={styles.main}><div className={styles.mobileBar}><button className={styles.menu} onClick={()=>setMobileOpen(v=>!v)}>☰</button><b>LAFRE Admin</b><button className={styles.menu} onClick={logout}>↪</button></div><header className={styles.topbar}><div className={styles.crumb}>LAFRE / <b>{title}</b></div><div className={styles.topActions}><span className={styles.adminPill}>Superuser · {profile.email||profile.full_name||'Admin'}</span><button className={styles.logout} onClick={logout}>Sign out</button></div></header><main className={styles.content}>{section==='dashboard'&&<Dashboard dashboard={dashboard} onNavigate={navTo}/>} {section==='users'&&<Users users={users} onSelect={u=>setDrawer({type:'user',item:u})} onApprove={approve} loading={loading}/>} {section==='lawyers'&&<Lawyers lawyers={lawyers} onCreate={()=>setLawyerForm({full_name:'',firm_name:'',slug:'',practice_areas:[],services:[],languages:[],city:'',province:'',address:'',email:'',phone:'',website:'',years_experience:0,consultation_mode:'online',consultation_fee_usd:'',accepts_free_legal_aid:false,available_for_appointments:true,verified:false,verification_note:'',verification_documents:[],bio:''})} onSelect={l=>setDrawer({type:'lawyer',item:l})} loading={loading}/>} {section==='reviews'&&<Reviews reviews={reviews} loading={loading} onSelect={r=>setDrawer({type:'review',item:r})}/>} {section==='matters'&&<Matters matters={matters} loading={loading}/>} {section==='knowledge'&&<Knowledge data={knowledge} loading={loading} onResolve={resolveFailure}/>} {section==='content'&&<Content/>} {section==='settings'&&<Settings/>}</main></div>{drawer&&<Drawer title={drawer.type==='lawyer'?`★★★ ${drawer.item.full_name}`:drawer.type==='review'?`Document review #${drawer.item.id}`:drawer.item.full_name||'Account'} onClose={()=>setDrawer(null)}><Detail item={drawer.item} type={drawer.type}/>{drawer.type==='user'&&drawer.item.status==='pending'&&<button className={styles.primary} style={{width:'100%',marginTop:15}} onClick={()=>{setDrawer(null);approve(drawer.item)}}>Approve account</button>}</Drawer>}{lawyerForm&&<div className={styles.drawerBackdrop} onMouseDown={()=>setLawyerForm(null)}><aside className={styles.drawer} onMouseDown={e=>e.stopPropagation()}><div className={styles.drawerHead}><h2>Add lawyer</h2><button className={styles.close} onClick={()=>setLawyerForm(null)}>×</button></div><div className={styles.drawerBody}><p className={styles.subtitle} style={{marginBottom:18}}>Create the professional lawyer profile. The existing backend currently accepts the professional profile here. It does not expose a lawyer-account credential creation field, so this frontend does not pretend to save a password it cannot persist.</p>{[['full_name','Full name'],['firm_name','Firm name'],['slug','Profile slug'],['email','Professional email'],['phone','Phone'],['city','City'],['province','Province'],['address','Address'],['website','Website'],['years_experience','Years experience'],['consultation_fee_usd','Consultation fee (USD)'],['verification_note','Verification note']].map(([k,l])=><div className={styles.field} key={k}><label>{l}</label><input value={lawyerForm[k]??''} onChange={e=>setLawyerForm({...lawyerForm,[k]:e.target.value})}/></div>)}<div className={styles.field}><label>Consultation mode</label><select className={styles.select} style={{width:'100%'}} value={lawyerForm.consultation_mode} onChange={e=>setLawyerForm({...lawyerForm,consultation_mode:e.target.value})}><option value="online">Online</option><option value="in_person">In person</option><option value="both">Online and in person</option></select></div><div className={styles.field}><label>Practice areas (comma separated)</label><input value={arr(lawyerForm.practice_areas).join(', ')} onChange={e=>setLawyerForm({...lawyerForm,practice_areas:e.target.value.split(',').map(x=>x.trim()).filter(Boolean)})}/></div><div className={styles.field}><label>Services (comma separated)</label><input value={arr(lawyerForm.services).join(', ')} onChange={e=>setLawyerForm({...lawyerForm,services:e.target.value.split(',').map(x=>x.trim()).filter(Boolean)})}/></div><div className={styles.field}><label>Languages (comma separated)</label><input value={arr(lawyerForm.languages).join(', ')} onChange={e=>setLawyerForm({...lawyerForm,languages:e.target.value.split(',').map(x=>x.trim()).filter(Boolean)})}/></div><div className={styles.field}><label>Bio</label><textarea rows="5" value={lawyerForm.bio} onChange={e=>setLawyerForm({...lawyerForm,bio:e.target.value})}/></div><label style={{display:'flex',gap:8,fontSize:12,marginBottom:8}}><input type="checkbox" checked={lawyerForm.verified} onChange={e=>setLawyerForm({...lawyerForm,verified:e.target.checked})}/> Mark as verified</label><label style={{display:'flex',gap:8,fontSize:12,marginBottom:16}}><input type="checkbox" checked={lawyerForm.accepts_free_legal_aid} onChange={e=>setLawyerForm({...lawyerForm,accepts_free_legal_aid:e.target.checked})}/> Accept free legal-aid requests</label><button className={styles.primary} style={{width:'100%'}} onClick={createLawyer}>Create lawyer profile</button></div></aside></div>}{passwordAction&&<PasswordModal title={passwordAction.title} onConfirm={passwordAction.run} onClose={()=>setPasswordAction(null)}/>} {toast&&<div className={styles.toast}>{toast}</div>}</div>;
 }
