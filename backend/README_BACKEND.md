@@ -80,6 +80,16 @@ After the first deploy, open Render Shell and create/confirm your admin user if 
 python manage.py create_lafre_admin --email admin@example.com --password "ChangeMe123!" --name "LAFRE Admin" --staff
 ```
 
+For real API integration testing, create approved accounts with linked profiles:
+
+```bash
+python manage.py create_test_student
+python manage.py create_test_citizen
+python manage.py create_test_lawyer
+```
+
+The default test emails are `test.student@example.test`, `test.citizen@example.test`, and `test.lawyer@example.test`; all use `TestPass!2026`. You can override `--email`, `--name`, or `--password`.
+
 ## Frontend connection
 
 ## Gmail SMTP email delivery

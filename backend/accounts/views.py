@@ -91,11 +91,11 @@ def suggested_redirect(profile: UserProfile | None, requested_module: str | None
     if requested_module == "student":
         return "/chat" if profile.can_use_student else "/access-denied"
     if requested_module == "citizen":
-        return "/citizen/home" if profile.can_use_civilian else "/access-denied"
+        return "/dashboards/civilian" if profile.can_use_civilian else "/access-denied"
     if requested_module == "lawyer":
-        return "/lawyer/home" if profile.can_access_lawyer_portal else "/access-denied"
+        return "/dashboards/lawyer" if profile.can_access_lawyer_portal else "/access-denied"
     if requested_module == "admin":
-        return "/admin/home" if (profile.can_access_admin or profile.user.is_staff or profile.user.is_superuser) else "/access-denied"
+        return "/admin" if (profile.can_access_admin or profile.user.is_staff or profile.user.is_superuser) else "/access-denied"
     return module_home_for_role(profile.role)
 
 
