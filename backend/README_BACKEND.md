@@ -100,6 +100,22 @@ DEFAULT_FROM_EMAIL=lafrebox@gmail.com
 
 `EMAIL_HOST_PASSWORD` must be a Google App Password. Do not use the normal Gmail password and do not commit the App Password to Git.
 
+## Fictional demo data
+
+To populate a local or staging database with coherent fictional records for testing:
+
+```bash
+python manage.py seed_demo_data
+```
+
+The command is repeatable and uses `demo.*` accounts and `demo-` slugs. It does not run automatically during deployment. To remove and recreate only these seeded records:
+
+```bash
+python manage.py seed_demo_data --reset
+```
+
+All seeded accounts use the password `DemoPass!2026`; the records use `example.test` email addresses and are not real people.
+
 In Vercel/your deployed frontend, set:
 
 ```env
