@@ -4,8 +4,12 @@ import calendar
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.db import OperationalError, transaction
 from django.http import FileResponse, HttpResponse
-from django.db import OperationalError
+from django.utils.crypto import get_random_string
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
@@ -454,10 +458,49 @@ class AdminLawyersView(APIView):
         admin, error = require_admin(request)
         if error:
             return error
-        serializer = LawyerSerializer(data=request.data)
+        data = request.data.copy()
+        email = (data.get("email") or "").strip().lower()
+        if not email:
+            return Response({"ok": False, "detail": "A professional email is required to create a portal account.", "errors": {"email": ["A professional email is required."]}}, status=400)
+        if User.objects.filter(email__iexact=email).exists() or Lawyer.objects.filter(email__iexact=email).exists():
+            return Response({"ok": False, "detail": "A user or lawyer with this email already exists.", "errors": {"email": ["This email is already in use."]}}, status=400)
+        password = data.pop("initial_password", "") or get_random_string(14)
+        with transaction.atomic():
+            serializer = LawyerSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            user = User.objects.create_user(username=email, email=email, password=password, first_name=data.get("full_name", "").strip())
+            profile = user.lafre_profile
+            profile.role = profile.requested_role = "lawyer"
+            profile.status = "approved"
+            profile.can_access_lawyer_portal = True
+            profile.can_use_civilian = True
+            profile.approved_by = admin
+            profile.approved_at = timezone.now()
+            profile.save()
+            lawyer = serializer.save(user=user)
+        send_mail(
+            "Your LAFRE lawyer portal access",
+            f"Your LAFRE lawyer account has been created.\n\nEmail: {email}\nTemporary password: {password}\n\nSign in at {getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000')}/lawyer/login. Please change this password after signing in.",
+            getattr(settings, "DEFAULT_FROM_EMAIL", "no-reply@lafre.local"), [email], fail_silently=True,
+        )
+        return Response({"ok": True, "lawyer": LawyerSerializer(lawyer).data, "credentials_sent": True}, status=201)
+
+
+class AdminLawyerDetailView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def patch(self, request, pk):
+        admin, error = require_admin(request)
+        if error:
+            return error
+        lawyer = Lawyer.objects.filter(pk=pk).first()
+        if not lawyer:
+            return Response({"ok": False, "detail": "Lawyer not found."}, status=404)
+        serializer = LawyerSerializer(lawyer, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         lawyer = serializer.save()
-        return Response({"ok": True, "lawyer": LawyerSerializer(lawyer).data}, status=201)
+        return Response({"ok": True, "lawyer": LawyerSerializer(lawyer).data})
 
 
 class AdminReviewQueueView(APIView):
