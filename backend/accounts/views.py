@@ -163,7 +163,7 @@ class ModuleRegisterCompleteView(APIView):
             "message": f"Your LAFRE {label} account request was submitted for administrator approval.",
             "profile": UserProfileSerializer(profile).data,
             "redirect_to": (
-                "/chat" if profile.role == "student" and getattr(settings, "AUTO_APPROVE_SIGNUPS", False)
+                "/forum" if profile.role == "student" and getattr(settings, "AUTO_APPROVE_SIGNUPS", False)
                 else "/pending" if profile.role in {"student", "citizen"}
                 else "/pending"
             ),

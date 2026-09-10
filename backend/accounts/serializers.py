@@ -105,7 +105,7 @@ def module_home_for_role(role: str) -> str:
     # /citizen/home, /lawyer/home or /admin/home route in the Next.js app,
     # so sending users there after login left them on a 404 page.
     return {
-        UserProfile.Role.STUDENT: "/chat",
+        UserProfile.Role.STUDENT: "/forum",
         UserProfile.Role.CITIZEN: "/dashboards/civilian",
         UserProfile.Role.LAWYER: "/dashboards/lawyer",
         UserProfile.Role.ADMIN: "/admin",

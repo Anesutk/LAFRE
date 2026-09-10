@@ -7,10 +7,11 @@ import {Icon} from '../../prototype/components/icons';
 import {RoleBadge} from '../../prototype/components/PostCard';
 import Status from '../../prototype/components/Status';
 import ui from '../../prototype/components/ui.module.css';
+import { getProfile } from '../../lib/api';
 
 export default function QuestionPage({params}){
- const post=posts.find(p=>p.id===params.id)||posts[0]; const [reply,setReply]=useState(''); const [sent,setSent]=useState(false);
- return <LafreShell active="Forum"><div className={ui.shell}>
+ const post=posts.find(p=>p.id===params.id)||posts[0]; const [reply,setReply]=useState(''); const [sent,setSent]=useState(false); const profile=getProfile(); const role=profile?.role==='student'||profile?.can_use_student?'student':profile?.role==='lawyer'?'lawyer':'visitor';
+ return <LafreShell role={role} active="Forum"><div className={ui.shell}>
   <div className={ui.row} style={{marginBottom:14}}><Link href="/forum" className={ui.muted} style={{textDecoration:'none',fontWeight:800}}>← Forum</Link><Status/></div>
   <div className={ui.twoCol}><main>
    <article className={ui.panel+' '+ui.pad}><div className={ui.row}><div><span className={ui.tag}>{post.category}</span><span className={ui.muted} style={{fontSize:11,marginLeft:8}}>{post.time}</span></div><button className={ui.outlineBtn} style={{height:32,padding:'0 10px'}}><Icon name="flag" size={14}/> Report</button></div><h1 style={{fontSize:30,lineHeight:1.16,margin:'14px 0 10px'}}>{post.title}</h1><div className={ui.row} style={{justifyContent:'flex-start'}}><span className={ui.avatar}>{post.author[0]}</span><div><b>{post.author}</b><div className={ui.muted} style={{fontSize:11}}>Public user · Zimbabwe</div></div></div><p style={{fontSize:15,lineHeight:1.75,color:'#3f3d38',marginTop:18}}>{post.excerpt} This is prototype content representing the longer user question that will eventually come from the backend.</p><div className={ui.divider}/><div className={ui.metrics}><span>↑ {post.score}</span><span><Icon name="message"/> 18 responses</span><span><Icon name="share"/> Share</span><span><Icon name="bookmark"/> Save</span></div></article>

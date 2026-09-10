@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from accounts.auth import get_user_from_request
+
 from .models import (
     Community, Post, Comment, LawyerProfile, LawyerBadge,
     MentorshipProgramme, MentorshipMessage, MentorshipMaterial, FindLawyerRequest,
@@ -64,9 +66,10 @@ class PostCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         request = self.context["request"]
-        profile = getattr(request.user, "lafre_profile", None)
+        user = get_user_from_request(request)
+        profile = getattr(user, "lafre_profile", None)
         role = profile.role if profile and profile.role in ("student", "lawyer") else "civilian"
-        return Post.objects.create(author=request.user, author_role=role, **validated_data)
+        return Post.objects.create(author=user, author_role=role, **validated_data)
 
 
 class LawyerBadgeSerializer(serializers.ModelSerializer):
