@@ -35,23 +35,29 @@ class PostListCreateView(APIView):
         user = get_user_from_request(request)
         qs = Post.objects.select_related("author", "community").prefetch_related("comments", "likes")
         community_key = request.query_params.get("community")
+        category_name = request.query_params.get("category")
         if community_key and community_key != "all":
             qs = qs.filter(community__key=community_key)
+        elif category_name:
+            qs = qs.filter(community__name__iexact=category_name)
         # Enforce the visibility rule in Python rather than a giant queryset filter, since
         # Post.visible_to() is the single source of truth for this rule elsewhere too -
         # duplicating the logic as a separate ORM filter here would risk the two drifting
         # apart over time.
         posts = [p for p in qs[:200] if p.visible_to(user)]
-        return Response({"ok": True, "posts": PostListSerializer(posts, many=True).data})
+        return Response({"ok": True, "posts": PostListSerializer(posts, many=True, context={"request": request}).data})
 
     def post(self, request):
         user = get_user_from_request(request)
         if not user:
             return api_error("Sign in to post.", 401)
+        profile = getattr(user, "lafre_profile", None)
+        if not profile or not profile.is_active_for_platform():
+            return api_error("Your account must be approved before you can post.", 403)
         serializer = PostCreateSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         post = serializer.save()
-        return Response({"ok": True, "post": PostDetailSerializer(post).data}, status=status.HTTP_201_CREATED)
+        return Response({"ok": True, "post": PostDetailSerializer(post, context={"request": request}).data}, status=status.HTTP_201_CREATED)
 
 
 class PostDetailView(APIView):
@@ -63,7 +69,7 @@ class PostDetailView(APIView):
         post = get_object_or_404(Post.objects.select_related("author", "community"), id=post_id)
         if not post.visible_to(user):
             return api_error("You don't have access to this post.", 403)
-        return Response({"ok": True, "post": PostDetailSerializer(post).data})
+        return Response({"ok": True, "post": PostDetailSerializer(post, context={"request": request}).data})
 
 
 class CommentCreateView(APIView):
@@ -74,6 +80,9 @@ class CommentCreateView(APIView):
         user = get_user_from_request(request)
         if not user:
             return api_error("Sign in to reply.", 401)
+        profile = getattr(user, "lafre_profile", None)
+        if not profile or not profile.is_active_for_platform():
+            return api_error("Your account must be approved before replying.", 403)
         post = get_object_or_404(Post, id=post_id)
         if not post.can_comment(user):
             return api_error("Only lawyers can respond to this question." if post.is_student_only else "You can't comment on this post.", 403)
@@ -93,6 +102,9 @@ class PostLikeToggleView(APIView):
         user = get_user_from_request(request)
         if not user:
             return api_error("Sign in to like a post.", 401)
+        profile = getattr(user, "lafre_profile", None)
+        if not profile or not profile.is_active_for_platform():
+            return api_error("Your account must be approved before liking posts.", 403)
         post = get_object_or_404(Post, id=post_id)
         like, created = PostLike.objects.get_or_create(post=post, user=user)
         if not created:
@@ -108,6 +120,9 @@ class PostSaveToggleView(APIView):
         user = get_user_from_request(request)
         if not user:
             return api_error("Sign in to save a post.", 401)
+        profile = getattr(user, "lafre_profile", None)
+        if not profile or not profile.is_active_for_platform():
+            return api_error("Your account must be approved before saving posts.", 403)
         post = get_object_or_404(Post, id=post_id)
         saved, created = SavedPost.objects.get_or_create(post=post, user=user)
         if not created:
@@ -165,7 +180,7 @@ class MentorshipListView(APIView):
         q = request.query_params.get("q")
         if q:
             qs = qs.filter(title__icontains=q)
-        return Response({"ok": True, "programmes": MentorshipProgrammeSerializer(qs, many=True).data})
+        return Response({"ok": True, "programmes": MentorshipProgrammeSerializer(qs, many=True, context={"request": request}).data})
 
 
 class MentorshipDetailView(APIView):
@@ -174,7 +189,7 @@ class MentorshipDetailView(APIView):
 
     def get(self, request, programme_id):
         programme = get_object_or_404(MentorshipProgramme.objects.prefetch_related("materials", "messages", "enrollments"), id=programme_id)
-        return Response({"ok": True, "programme": MentorshipProgrammeDetailSerializer(programme).data})
+        return Response({"ok": True, "programme": MentorshipProgrammeDetailSerializer(programme, context={"request": request}).data})
 
 
 class MentorshipJoinView(APIView):
@@ -185,9 +200,12 @@ class MentorshipJoinView(APIView):
         user = get_user_from_request(request)
         if not user:
             return api_error("Sign in to join a mentorship programme.", 401)
+        profile = getattr(user, "lafre_profile", None)
+        if not profile or profile.role != "student" or not profile.is_active_for_platform():
+            return api_error("Only approved students can join mentorship programmes.", 403)
         programme = get_object_or_404(MentorshipProgramme, id=programme_id)
         MentorshipEnrollment.objects.get_or_create(programme=programme, student=user)
-        return Response({"ok": True, "programme": MentorshipProgrammeDetailSerializer(programme).data})
+        return Response({"ok": True, "programme": MentorshipProgrammeDetailSerializer(programme, context={"request": request}).data})
 
 
 class MentorshipMessageCreateView(APIView):
@@ -198,6 +216,9 @@ class MentorshipMessageCreateView(APIView):
         user = get_user_from_request(request)
         if not user:
             return api_error("Sign in to post in this group.", 401)
+        profile = getattr(user, "lafre_profile", None)
+        if not profile or not profile.is_active_for_platform():
+            return api_error("Your account must be approved before using mentorship groups.", 403)
         programme = get_object_or_404(MentorshipProgramme, id=programme_id)
         is_member = MentorshipEnrollment.objects.filter(programme=programme, student=user).exists() or getattr(programme.lawyer, "user_id", None) == user.id
         if not is_member:

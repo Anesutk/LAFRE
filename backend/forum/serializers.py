@@ -37,10 +37,12 @@ class PostListSerializer(serializers.ModelSerializer):
     community_detail = CommunitySerializer(source="community", read_only=True)
     reply_count = serializers.SerializerMethodField()
     like_count = serializers.SerializerMethodField()
+    liked = serializers.SerializerMethodField()
+    saved = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
-        fields = ["id", "title", "text", "author_name", "author_role", "community_detail", "language", "created_at", "reply_count", "like_count"]
+        fields = ["id", "title", "text", "author_name", "author_role", "community_detail", "language", "created_at", "reply_count", "like_count", "liked", "saved"]
 
     def get_author_name(self, obj):
         return _author_name(obj.author)
@@ -50,6 +52,26 @@ class PostListSerializer(serializers.ModelSerializer):
 
     def get_like_count(self, obj):
         return obj.likes.count()
+
+    def _request_user(self):
+        request = self.context.get("request") if hasattr(self, "context") else None
+        user = getattr(request, "user", None) if request else None
+        # api views use a manual token rather than DRF authentication, so request.user
+        # may be AnonymousUser. Resolve the same token used by the platform.
+        if request:
+            try:
+                return get_user_from_request(request)
+            except Exception:
+                return None
+        return user if getattr(user, "is_authenticated", False) else None
+
+    def get_liked(self, obj):
+        user = self._request_user()
+        return bool(user and user.is_authenticated and obj.likes.filter(user=user).exists())
+
+    def get_saved(self, obj):
+        user = self._request_user()
+        return bool(user and user.is_authenticated and obj.saved_by.filter(user=user).exists())
 
 
 class PostDetailSerializer(PostListSerializer):
@@ -116,10 +138,12 @@ class MentorshipMessageSerializer(serializers.ModelSerializer):
 class MentorshipProgrammeSerializer(serializers.ModelSerializer):
     lawyer_name = serializers.SerializerMethodField()
     student_count = serializers.SerializerMethodField()
+    joined = serializers.SerializerMethodField()
+    is_mentor = serializers.SerializerMethodField()
 
     class Meta:
         model = MentorshipProgramme
-        fields = ["id", "title", "area", "description", "topics", "weeks", "is_free", "fee_amount", "lawyer_name", "student_count"]
+        fields = ["id", "title", "area", "description", "topics", "weeks", "is_free", "fee_amount", "lawyer_name", "student_count", "joined", "is_mentor"]
 
     def get_lawyer_name(self, obj):
         return obj.lawyer.user.get_full_name() or obj.lawyer.user.email
@@ -127,10 +151,36 @@ class MentorshipProgrammeSerializer(serializers.ModelSerializer):
     def get_student_count(self, obj):
         return obj.enrollments.count()
 
+    def _request_user(self):
+        request = self.context.get("request") if hasattr(self, "context") else None
+        if not request:
+            return None
+        try:
+            return get_user_from_request(request)
+        except Exception:
+            return None
+
+    def get_joined(self, obj):
+        user = self._request_user()
+        return bool(user and obj.enrollments.filter(student=user).exists())
+
+    def get_is_mentor(self, obj):
+        user = self._request_user()
+        return bool(user and obj.lawyer.user_id == user.id)
+
 
 class MentorshipProgrammeDetailSerializer(MentorshipProgrammeSerializer):
     materials = MentorshipMaterialSerializer(many=True, read_only=True)
-    messages = MentorshipMessageSerializer(many=True, read_only=True)
+    messages = serializers.SerializerMethodField()
+
+    def get_messages(self, obj):
+        user = self._request_user()
+        if not user:
+            return []
+        is_member = obj.enrollments.filter(student=user).exists() or obj.lawyer.user_id == user.id
+        if not is_member:
+            return []
+        return MentorshipMessageSerializer(obj.messages.all(), many=True).data
 
     class Meta(MentorshipProgrammeSerializer.Meta):
         fields = MentorshipProgrammeSerializer.Meta.fields + ["materials", "messages"]

@@ -236,14 +236,25 @@ class BaseSeparatedRegisterSerializer(StrongPasswordMixin, serializers.Serialize
 
 
 class StudentRegisterSerializer(BaseSeparatedRegisterSerializer):
-    # Lovable-style student registration uses only these visible fields:
-    # full_name, institution (optional), email and password.
+    # Student registration explicitly requires password confirmation.
     requested_role = UserProfile.Role.STUDENT
-    institution = serializers.CharField(max_length=180, required=False, allow_blank=True)
+    confirm_password = serializers.CharField(
+        write_only=True,
+        error_messages={"blank": "Confirm password is required.", "required": "Confirm password is required."},
+    )
+    institution = serializers.CharField(max_length=180, required=False, allow_blank=True, default="Midlands State University")
+
+    def validate(self, attrs):
+        confirm = attrs.get("confirm_password")
+        if not confirm:
+            raise serializers.ValidationError({"confirm_password": ["Confirm password is required."]})
+        if attrs.get("password") != confirm:
+            raise serializers.ValidationError({"confirm_password": ["Passwords do not match."]})
+        return attrs
 
     def profile_kwargs(self, validated_data):
         return {
-            "institution": validated_data.get("institution", ""),
+            "institution": validated_data.get("institution") or "Midlands State University",
             "student_number": "",
             "phone": "",
             "city": "",
@@ -285,10 +296,10 @@ class RegisterSerializer(BaseSeparatedRegisterSerializer):
 class StudentRegistrationCompleteSerializer(StrongPasswordMixin, serializers.Serializer):
     # Exact Lovable-style student registration form.
     full_name = serializers.CharField(max_length=160, error_messages={"blank": "Full name is required.", "required": "Full name is required."})
-    institution = serializers.CharField(max_length=180, required=False, allow_blank=True)
+    institution = serializers.CharField(max_length=180, required=False, allow_blank=True, default="Midlands State University")
     email = serializers.EmailField(error_messages={"invalid": "Please enter a valid email address.", "blank": "Email address is required.", "required": "Email address is required."})
     password = serializers.CharField(write_only=True, min_length=8, error_messages={"blank": "Password is required.", "required": "Password is required."})
-    confirm_password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    confirm_password = serializers.CharField(write_only=True, error_messages={"blank": "Confirm password is required.", "required": "Confirm password is required."})
 
     def validate_email(self, value):
         email = normalise_email(value)
@@ -298,7 +309,9 @@ class StudentRegistrationCompleteSerializer(StrongPasswordMixin, serializers.Ser
 
     def validate(self, attrs):
         confirm = attrs.get("confirm_password")
-        if confirm and attrs.get("password") != confirm:
+        if not confirm:
+            raise serializers.ValidationError({"confirm_password": ["Confirm password is required."]})
+        if attrs.get("password") != confirm:
             raise serializers.ValidationError({"confirm_password": ["Passwords do not match."]})
         return attrs
 

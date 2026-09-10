@@ -9,7 +9,7 @@ function ErrorBox({ message, debug }) {
 }
 
 export default function StudentRegister() {
-  const [form, setForm] = useState({ full_name: '', institution: '', email: '', password: '' });
+  const [form, setForm] = useState({ full_name: '', institution: 'Midlands State University', email: '', password: '', confirm_password: '' });
   const [error, setError] = useState('');
   const [debug, setDebug] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
@@ -41,9 +41,10 @@ export default function StudentRegister() {
             <header className="auth2-form-head"><h2>Create your student account</h2><p>New accounts require admin approval before chat access.</p></header>
             <ErrorBox message={error} debug={debug} />
             <label className="auth2-field"><span>Full name</span><input value={form.full_name} onChange={(e)=>update('full_name', e.target.value)} required autoComplete="name" />{fieldErrors.full_name?.[0] ? <small className="auth2-error-text">{fieldErrors.full_name[0]}</small> : null}</label>
-            <label className="auth2-field"><span>Institution (optional)</span><input value={form.institution} onChange={(e)=>update('institution', e.target.value)} placeholder="e.g. University of Lagos" />{fieldErrors.institution?.[0] ? <small className="auth2-error-text">{fieldErrors.institution[0]}</small> : null}</label>
+            <label className="auth2-field"><span>University / institution</span><input value={form.institution} onChange={(e)=>update('institution', e.target.value)} placeholder="Midlands State University" />{fieldErrors.institution?.[0] ? <small className="auth2-error-text">{fieldErrors.institution[0]}</small> : null}</label>
             <label className="auth2-field"><span>Email</span><input type="email" value={form.email} onChange={(e)=>update('email', e.target.value)} required autoComplete="email" />{fieldErrors.email?.[0] ? <small className="auth2-error-text">{fieldErrors.email[0]}</small> : null}</label>
             <label className="auth2-field"><span>Password</span><input type="password" value={form.password} onChange={(e)=>update('password', e.target.value)} required autoComplete="new-password" />{fieldErrors.password?.[0] ? <small className="auth2-error-text">{fieldErrors.password[0]}</small> : null}</label>
+            <label className="auth2-field"><span>Confirm password</span><input type="password" value={form.confirm_password} onChange={(e)=>update('confirm_password', e.target.value)} required autoComplete="new-password" />{fieldErrors.confirm_password?.[0] ? <small className="auth2-error-text">{fieldErrors.confirm_password[0]}</small> : null}</label>
             <button className="auth2-primary" type="submit" disabled={loading}>{loading ? 'Creating account…' : 'Create account'}</button>
             <p className="auth2-switch">Already have an account? <a href="/login">Sign in</a></p>
           </form>
