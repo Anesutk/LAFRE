@@ -12,6 +12,7 @@ const nav = [
 ];
 
 function statusClass(status){return `${styles.status} ${styles[status] || styles.neutral}`}
+function isAdminProfile(profile){return Boolean(profile?.is_superuser || profile?.is_staff || profile?.can_access_admin || profile?.role === 'admin')}
 function Stat({label,value,accent}){return <div className={styles.stat}><div className={styles.statTop}><span>{label}</span><span className={accent?styles.statAccent:'★' }>•</span></div><div className={styles.statValue}>{value ?? '—'}</div></div>}
 function fmtDate(v){if(!v)return '—';try{return new Date(v).toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'})}catch{return '—'}}
 function arr(v){return Array.isArray(v)?v:(v?Object.values(v):[])}
@@ -45,8 +46,8 @@ function Detail({item,type}){if(type==='lawyer')return <div className={styles.de
 
 export default function AdminPage(){const [profile,setProfile]=useState(null);const [ready,setReady]=useState(false);const [section,setSection]=useState('dashboard');const [dashboard,setDashboard]=useState(null);const [users,setUsers]=useState([]);const [lawyers,setLawyers]=useState([]);const [reviews,setReviews]=useState([]);const [matters,setMatters]=useState([]);const [knowledge,setKnowledge]=useState(null);const [settings,setSettings]=useState([]);const [loading,setLoading]=useState(false);const [drawer,setDrawer]=useState(null);const [passwordAction,setPasswordAction]=useState(null);const [toast,setToast]=useState('');const [mobileOpen,setMobileOpen]=useState(false);const [lawyerForm,setLawyerForm]=useState(null);
  const load=useCallback(async(id)=>{setLoading(true);try{if(id==='dashboard')setDashboard(await apiFetch('/accounts/admin/dashboard/'));if(id==='users'){const r=await apiFetch('/accounts/admin/users/');setUsers(r.users||[])}if(id==='lawyers'){const r=await apiFetch('/civilian/admin/lawyers/');setLawyers(r.lawyers||[])}if(id==='reviews'){const r=await apiFetch('/civilian/admin/reviews/');setReviews(r.reviews||r.document_reviews||[])}if(id==='matters'){const r=await apiFetch('/civilian/admin/citizen-matters/');setMatters(r.matters||r.citizen_matters||[])}if(id==='knowledge')setKnowledge(await apiFetch('/civilian/admin/knowledge-base/'));if(id==='settings')setSettings([])}catch(e){setToast(e.message||'Could not load this section.')}finally{setLoading(false)}},[]);
- useEffect(()=>{const p=getProfile();if(p?.is_superuser)setProfile(p);setReady(true);if(p?.is_superuser)load('dashboard')},[load]);
- useEffect(()=>{if(profile?.is_superuser)load(section)},[section,profile,load]);
+ useEffect(()=>{const p=getProfile();if(isAdminProfile(p))setProfile(p);setReady(true);if(isAdminProfile(p))load('dashboard')},[load]);
+ useEffect(()=>{if(isAdminProfile(profile))load(section)},[section,profile,load]);
  useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(''),3500);return()=>clearTimeout(t)},[toast]);
  function navTo(id){setSection(id);setMobileOpen(false);setDrawer(null)}
  async function approve(user){setPasswordAction({title:`Approve ${user.full_name||user.email}`,run:async password=>{await apiFetch(`/accounts/admin/users/${user.id}/quick-approve/`,{method:'POST',body:JSON.stringify({password})});setToast('Account approved.');setPasswordAction(null);load('users');load('dashboard')}})}

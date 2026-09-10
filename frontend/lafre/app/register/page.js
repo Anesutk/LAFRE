@@ -19,8 +19,8 @@ export default function StudentRegister() {
     e.preventDefault();
     setError(''); setDebug(''); setFieldErrors({}); setLoading(true);
     try {
-      await apiFetch('/accounts/student/register/', { method: 'POST', body: JSON.stringify(form) });
-      redirectTo('/pending');
+      const result = await apiFetch('/accounts/student/register/', { method: 'POST', body: JSON.stringify(form) });
+      redirectTo(result.redirect_to || '/pending');
     } catch (err) {
       setError(err.message || 'Could not create your account.');
       setDebug(err.debug || '');

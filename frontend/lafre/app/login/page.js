@@ -46,7 +46,8 @@ export default function StudentLogin() {
             <label className="auth2-field"><span>Email</span><input autoComplete="email" type="email" value={email} onChange={(e)=>setEmail(e.target.value)} required />{fieldErrors.email?.[0] ? <small className="auth2-error-text">{fieldErrors.email[0]}</small> : null}</label>
             <label className="auth2-field"><span>Password</span><input autoComplete="current-password" type="password" value={password} onChange={(e)=>setPassword(e.target.value)} required />{fieldErrors.password?.[0] || fieldErrors.non_field_errors?.[0] ? <small className="auth2-error-text">{fieldErrors.password?.[0] || fieldErrors.non_field_errors?.[0]}</small> : null}</label>
             <button className="auth2-primary" type="submit" disabled={loading}>{loading ? 'Signing in…' : 'Sign in'}</button>
-            <p className="auth2-switch">New here? <a href="/register">Create an account</a></p>
+            <p className="auth2-switch">New here? <a href="/register">Student account</a> · <a href="/citizen-register">Civilian account</a></p>
+            <p className="auth2-switch"><a href="/citizen-login">Civilian login</a> · <a href="/lawyer-login">Lawyer portal login</a></p>
           </form>
         </section>
       </section>
