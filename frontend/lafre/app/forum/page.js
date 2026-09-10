@@ -1,24 +1,22 @@
 'use client';
-import {useMemo,useState} from 'react';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import LafreShell from '../prototype/components/LafreShell';
-import PostCard from '../prototype/components/PostCard';
-import QuestionComposer from '../prototype/components/QuestionComposer';
-import Status from '../prototype/components/Status';
-import {posts} from '../prototype/mock-api';
+import { apiFetch, getProfile } from '../lib/api';
 import ui from '../prototype/components/ui.module.css';
 
-export default function Forum(){
- const [tab,setTab]=useState('Latest'); const [q,setQ]=useState(''); const [showComposer,setShowComposer]=useState(false);
- const filtered=useMemo(()=>posts.filter(p=>(p.title+p.excerpt+p.category).toLowerCase().includes(q.toLowerCase())),[q]);
- return <LafreShell active="Forum"><div className={ui.shell}>
-  <div className={ui.row}><div><div className={ui.eyebrow}>LAFRE forum</div><h1 className={ui.title}>Legal questions, real conversations.</h1><p className={ui.subtitle}>Browse public questions and discussions. Login is required to participate.</p></div><Status>Mock API</Status></div>
-  <div className={ui.twoCol} style={{marginTop:24}}><section>
-   <div className={ui.panel+' '+ui.pad} style={{marginBottom:14}}><div className={ui.row}><div style={{display:'flex',gap:8,flexWrap:'wrap'}}>{['Latest','Trending','Unanswered','Following'].map(x=><button key={x} onClick={()=>setTab(x)} className={x===tab?ui.goldBtn:ui.outlineBtn} style={{height:34,padding:'0 11px',fontSize:12}}>{x}</button>)}</div><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search this forum" style={{height:36,width:210,border:'1px solid #d9d5cc',borderRadius:7,padding:'0 10px'}}/></div></div>
-   <div className={ui.panel}>{filtered.map(p=><PostCard key={p.id} post={p}/>)}{!filtered.length&&<div className={ui.empty}>No demo discussions match that search.</div>}</div>
-  </section><aside>
-    <button className={ui.goldBtn} style={{width:'100%',marginBottom:12}} onClick={()=>setShowComposer(!showComposer)}>{showComposer?'Close question form':'Ask a Question'}</button>
-    {showComposer?<QuestionComposer/>:<div className={ui.panel+' '+ui.pad}><div className={ui.eyebrow}>Community rules</div><h3 style={{fontSize:18}}>Keep the forum useful.</h3><p className={ui.muted} style={{lineHeight:1.6,fontSize:13}}>Be respectful. Do not publish sensitive personal information. Student-only questions are reserved for verified lawyers.</p><div className={ui.divider}/><div className={ui.listItem}><b>Need a lawyer?</b><div className={ui.muted}>Use a structured legal-help request rather than posting private case details publicly.</div></div><Link href="/legal-help" className={ui.outlineBtn} style={{width:'100%',marginTop:12}}>View legal help</Link></div>}
-  </aside></div>
- </div></LafreShell>
+export default function ForumPage() {
+  const [posts, setPosts] = useState([]);
+  const [communities, setCommunities] = useState([]);
+  const [text, setText] = useState('');
+  const [title, setTitle] = useState('');
+  const [community, setCommunity] = useState('');
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  async function load() { try { const [postResult, communityResult] = await Promise.all([apiFetch('/forum/posts/'), apiFetch('/forum/communities/')]); setPosts(postResult.posts || []); setCommunities(communityResult.communities || []); } catch (err) { setError(err.message || 'Could not load the forum.'); } }
+  useEffect(() => { load(); }, []);
+  async function submit(event) { event.preventDefault(); setError(''); setNotice(''); if (!title.trim() || !text.trim() || !community) { setError('Title, community, and question are required.'); return; } try { await apiFetch('/forum/posts/', { method: 'POST', body: JSON.stringify({ title: title.trim(), text: text.trim(), community: Number(community) }) }); setTitle(''); setText(''); setNotice('Your discussion was posted.'); await load(); } catch (err) { setError(err.message || 'Could not post the discussion.'); } }
+  const profile = getProfile();
+  return <LafreShell active="Forum"><div className={ui.shell}><div className={ui.eyebrow}>LAFRE forum</div><h1 className={ui.title}>Legal questions, real conversations.</h1><p className={ui.subtitle}>Discussions are loaded from the LAFRE backend and visibility follows your account role.</p>{error && <div className={ui.panel + ' ' + ui.pad}><p>{error}</p></div>}{notice && <div className={ui.panel + ' ' + ui.pad}><p>{notice}</p></div>}{profile && <form onSubmit={submit} className={ui.panel + ' ' + ui.pad} style={{ margin: '20px 0' }}><h2 style={{ fontSize: 19, marginTop: 0 }}>Start a discussion</h2><input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Title" style={{ width: '100%', padding: 10, marginBottom: 8 }} /><select value={community} onChange={(event) => setCommunity(event.target.value)} style={{ width: '100%', padding: 10, marginBottom: 8 }}><option value="">Choose a community</option>{communities.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><textarea value={text} onChange={(event) => setText(event.target.value)} placeholder="Describe your question" rows={4} style={{ width: '100%', padding: 10 }} /><button className={ui.goldBtn} type="submit" style={{ marginTop: 10 }}>Post discussion</button></form>}{posts.map((post) => <article className={ui.panel + ' ' + ui.pad} key={post.id} style={{ marginBottom: 12 }}><div className={ui.eyebrow}>{post.community_detail?.name || post.author_role}</div><h2 style={{ fontSize: 19 }}><Link href={`/forum/${post.id}`}>{post.title}</Link></h2><p>{post.text}</p><span className={ui.muted}>{post.reply_count || 0} replies · {post.like_count || 0} likes</span></article>)}{!posts.length && !error && <p className={ui.muted}>No discussions are available yet.</p>}</div></LafreShell>;
 }

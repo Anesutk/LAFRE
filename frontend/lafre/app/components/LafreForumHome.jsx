@@ -358,12 +358,6 @@ function TopBar({ role, menu, setMenu, search, setSearch }) {
       <button className={styles.menu} onClick={() => setMenu(!menu)}>☰</button>
       <label className={styles.search}><span>⌕</span><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search discussions, lawyers, topics..." /></label>
       <div className={styles.topActions}>
-        {/* Prototype-only role preview switch - stands in for real auth for now */}
-        <div className={styles.roleSwitch}>
-          <a href="?view=visitor" className={role === 'visitor' ? styles.roleActive : ''}>Visitor</a>
-          <a href="?view=civilian" className={role === 'civilian' ? styles.roleActive : ''}>Civilian</a>
-          <a href="?view=student" className={role === 'student' ? styles.roleActive : ''}>Student</a>
-        </div>
         <a href="/login" className={styles.login}>Log in</a>
         <a href="/register" className={styles.signup}>Sign up</a>
       </div>

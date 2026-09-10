@@ -14,10 +14,6 @@ export default function LafreShell({children, role='visitor', active=''}){
     {href:'/mentorship',label:'Mentorship',icon:'users',hide:role==='visitor'||role==='civilian'},
     {href:'/ai-tools',label:'AI Tools',icon:'tool'},
   ].filter(x=>!x.hide);
-  if(role!=='visitor'){
-    links.push({href:'/connections',label:'Connections',icon:'users'});
-    links.push({href:'/messages',label:'Messages',icon:'message'});
-  }
   if(role==='civilian') links.push({href:'/legal-help',label:'Legal Help Requests',icon:'brief'});
   if(role==='lawyer') links.push({href:'/legal-help',label:'Legal Help Requests',icon:'brief'});
   return <div className={styles.page}>
@@ -26,7 +22,7 @@ export default function LafreShell({children, role='visitor', active=''}){
       <Link className={styles.brand} href="/"><span className={styles.brandMark}>⚖</span><span><strong>LAFRE</strong><small>LEGAL COMMUNITY</small></span></Link>
       <div className={styles.search}><Icon name="search" size={17}/><input placeholder="Search discussions, lawyers, topics..."/><kbd>/</kbd></div>
       <div className={styles.topActions}>
-        {role!=='visitor' && <><Link href="/messages" className={styles.topIcon}><Icon name="message"/></Link><button className={styles.topIcon}><Icon name="bell"/></button><span className={styles.userBadge}>{roleNames[role][0]}</span></>}
+        {role!=='visitor' && <span className={styles.userBadge}>{roleNames[role][0]}</span>}
         {role==='visitor' && <><Link href="/login" className={styles.ghostBtn}>Log in</Link><Link href="/register" className={styles.goldBtn}>Sign up</Link></>}
       </div>
     </header>
@@ -50,10 +46,6 @@ export default function LafreShell({children, role='visitor', active=''}){
       <main className={styles.content}>{children}</main>
     </div>
   </div>
-}
-
-export function RoleSwitcher({current}){
-  return <div className={styles.roleSwitcher}><span>Prototype view</span><Link href="/dashboards/civilian">Civilian</Link><Link href="/dashboards/student">Student</Link><Link href="/dashboards/lawyer">Lawyer</Link></div>
 }
 
 export {styles};

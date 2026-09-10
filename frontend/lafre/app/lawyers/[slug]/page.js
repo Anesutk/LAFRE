@@ -1,13 +1,16 @@
 'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import {useState} from 'react';
+import { useParams } from 'next/navigation';
 import LafreShell from '../../prototype/components/LafreShell';
-import {lawyers} from '../../prototype/mock-api';
+import { apiFetch } from '../../lib/api';
 import ui from '../../prototype/components/ui.module.css';
-export default function LawyerProfile({params}){
- const l=lawyers.find(x=>x.slug===params.slug)||lawyers[0]; const [connected,setConnected]=useState(false);
- return <LafreShell active="Find Lawyers"><div className={ui.shell}><Link href="/lawyers" className={ui.muted} style={{textDecoration:'none',fontWeight:800}}>← Find Lawyers</Link><div className={ui.panel+' '+ui.pad} style={{marginTop:15}}><div className={ui.row} style={{alignItems:'flex-start'}}><div className={ui.row} style={{justifyContent:'flex-start'}}><div className={ui.avatarLg}>{l.name[0]}</div><div><h1 style={{fontSize:29,margin:'0 0 4px'}}>{l.name}</h1><div className={ui.stars}>★★★ <span style={{color:'#5b574f',letterSpacing:0}}>Verified practising lawyer</span></div><div className={ui.muted} style={{fontSize:13,marginTop:5}}>{l.firm} · {l.location}</div></div></div><span className={ui.tag}>{l.available?'Accepting new requests':'Currently unavailable'}</span></div><p style={{fontSize:14,lineHeight:1.7,maxWidth:780,color:'#4f4c45'}}>{l.bio}</p><div className={ui.btnRow}><button className={ui.goldBtn} onClick={()=>alert('Mock API: private conversation opened.')}>Message</button><button className={ui.outlineBtn} onClick={()=>setConnected(true)}>{connected?'Connection requested':'Connect'}</button></div></div>
- <div className={ui.threeCol} style={{marginTop:16}}><div className={ui.panel+' '+ui.pad}><div className={ui.eyebrow}>Practice</div><h3>{l.area}</h3><p className={ui.muted}>Focused professional profile with service information and jurisdictional details.</p></div><div className={ui.panel+' '+ui.pad}><div className={ui.eyebrow}>Experience</div><h3>{l.experience}</h3><p className={ui.muted}>★ {l.rating} from {l.reviews} reviews</p></div><div className={ui.panel+' '+ui.pad}><div className={ui.eyebrow}>Mentorship</div><h3>{l.mentorship?'Available':'Not currently offered'}</h3><p className={ui.muted}>Professional development programmes can be private to selected students.</p></div></div>
- <section className={ui.panel+' '+ui.pad} style={{marginTop:16}}><div className={ui.row}><h2 style={{fontSize:20}}>Reviews</h2><span className={ui.muted} style={{fontSize:12}}>Service-based in the future</span></div>{['Clear communication and practical guidance.','Very professional and responsive.','Helpful explanation of the options available.'].map((x,i)=><div className={ui.listItem} key={i}><b>{'★★★★★'.slice(0,5)}</b><p style={{margin:'5px 0',fontSize:13}}>{x}</p><span className={ui.muted} style={{fontSize:11}}>Verified interaction · demo</span></div>)}</section>
- </div></LafreShell>
+
+export default function LawyerDetailPage() {
+  const { slug } = useParams();
+  const [lawyer, setLawyer] = useState(null);
+  const [error, setError] = useState('');
+  useEffect(() => { if (slug) apiFetch(`/forum/lawyers/${slug}/`).then((result) => setLawyer(result.lawyer)).catch((err) => setError(err.message || 'Could not load this profile.')); }, [slug]);
+  return <LafreShell active="Find Lawyers"><div className={ui.shell}>{error && <div className={ui.panel + ' ' + ui.pad}><p>{error}</p></div>}{lawyer && <><Link href="/lawyers" className={ui.goldText}>← All lawyers</Link><div className={ui.eyebrow} style={{ marginTop: 24 }}>{lawyer.location || 'Location not listed'}</div><h1 className={ui.title}>{lawyer.full_name}</h1><p className={ui.subtitle}>{lawyer.firm_name || 'Independent practice'} · {lawyer.practice_area || 'Legal services'}</p><section className={ui.panel + ' ' + ui.pad}><p>{lawyer.bio || 'No biography has been provided.'}</p><p className={ui.muted}>{lawyer.years_experience || 0} years of experience · {lawyer.public_email || 'Contact details available on request'}</p></section></>}{!lawyer && !error && <p>Loading profile…</p>}</div></LafreShell>;
 }
